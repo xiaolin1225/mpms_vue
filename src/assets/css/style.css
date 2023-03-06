@@ -1,0 +1,201 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  list-style: none;
+  text-decoration: none;
+  /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
+  /*定义滚动条轨道 内阴影+圆角*/
+  /*定义滑块 内阴影+圆角*/
+}
+* ::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+  background-color: #f5f5f5;
+}
+* ::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: #f5f5f5;
+}
+* ::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+  background-color: #c8c8c8;
+}
+input {
+  border: none;
+  outline: none;
+}
+:root {
+  /* 宽度高度变量定义 */
+  --back-header-height: 70px;
+  --back-sidebar-main-menu-width: 5rem;
+  --back-sidebar-sub-menu-width: 240px;
+  /* 全局边距变量定义 */
+  --margin-y: 1.5rem;
+  --margin-x: 1.5rem;
+  --padding-y: 1rem;
+  --padding-x: 1rem;
+  /* 全局颜色变量定义 */
+  --body-background-color: #f8fafc;
+  --panel-background-color: #ffffff;
+  --panel-border-color: #e9eef5;
+  --panel-border-primary-color: #0054FE;
+  --item-primary-background-color: #0054FE;
+  --item-primary-hover-background-color: rgba(58, 132, 255, 0.2);
+  --text-primary-color: #0054FE;
+  --text-default-color: #1e293b;
+  --text-light-color: #64748b;
+  --text-white: #ffffff;
+  --bg-light: #F8F9FB;
+  --bg-light-primary: #ecf5ff;
+  --bg-dark-primary: #0054FE;
+  --bg-dark-hover-primary: #4582ff;
+  --bg-dark-gray: #CACACA;
+  /*全局属性变量定义*/
+  --shadow: 0 1px 1px 0 #302E150F;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  background-color: var(--body-background-color);
+}
+body.dark {
+  --body-background-color: #192132;
+}
+body.submenu-open .submenu-container {
+  transform: translateX(0);
+}
+body.submenu-open .page-container .main-container {
+  margin-left: calc(var(--back-sidebar-main-menu-width) + var(--back-sidebar-sub-menu-width));
+}
+.card {
+  background-color: var(--panel-background-color);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.5s cubic-bezier(0.4, 0, 1, 1);
+}
+.card .card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: var(--margin-y);
+  padding: var(--padding-y) 0;
+  color: var(--text-default-color);
+  border-bottom: 1px solid var(--panel-border-color);
+}
+.card .card-title > * {
+  margin-bottom: 0.5rem;
+}
+.card .card-title > *:last-child {
+  margin-bottom: 0;
+}
+.card .card-title h1 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.card .card-title p {
+  font-size: 0.5rem;
+  color: var(--text-light-color);
+  font-weight: 300;
+}
+.el-menu {
+  border: none;
+}
+.el-popover {
+  min-width: 65px;
+}
+.el-descriptions-item__label {
+  white-space: nowrap;
+}
+.emphasize {
+  color: var(--text-primary-color);
+  font-weight: 600;
+}
+.m {
+  margin: var(--margin-y) var(--margin-x);
+}
+.ml {
+  margin-left: var(--margin-x);
+}
+.mr {
+  margin-right: var(--margin-x);
+}
+.mt {
+  margin-top: var(--margin-y);
+}
+.mb {
+  margin-bottom: var(--margin-y);
+}
+.mx {
+  margin-left: var(--margin-x);
+  margin-right: var(--margin-x);
+}
+.my {
+  margin-top: var(--margin-y);
+  margin-bottom: var(--margin-y);
+}
+.p {
+  padding: var(--padding-y) var(--padding-x);
+}
+.pl {
+  padding-left: var(--padding-x);
+}
+.pr {
+  padding-right: var(--padding-x);
+}
+.pt {
+  padding-top: var(--padding-y);
+}
+.pb {
+  padding-bottom: var(--padding-y);
+}
+.px {
+  padding-left: var(--padding-x);
+  padding-right: var(--padding-x);
+}
+.py {
+  padding-top: var(--padding-y);
+  padding-bottom: var(--padding-y);
+}
+.clearfix {
+  height: 0;
+  background-color: transparent;
+  clear: both;
+}
+@media screen and (max-width: 992px) {
+  .page-container .overlay {
+    display: block !important;
+  }
+  body.submenu-open .page-container .overlay {
+    transform: translate(0);
+    opacity: 1;
+  }
+  body.submenu-open .page-container .main-container {
+    margin-left: var(--back-sidebar-main-menu-width);
+  }
+}
+@media screen and (max-width: 576px) {
+  .page-container .main-container {
+    margin-left: 0 !important;
+  }
+  .page-container .overlay {
+    width: 100% !important;
+  }
+  .main-menu-container {
+    transform: translate(-100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 1, 1);
+  }
+  .submenu-container {
+    transform: translateX(-100%);
+  }
+  body.submenu-open .main-menu-container {
+    transform: translate(0);
+  }
+}
+/*# sourceMappingURL=style.css.map */
