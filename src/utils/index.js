@@ -66,3 +66,66 @@ export const generateInitialPassword = (length) => {
     }
     return password;
 }
+
+export const createPopMenu = (x, y, list) => {
+    let menuItem = document.getElementById("pop-menu");
+    if (menuItem !== null) {
+        document.body.removeChild(menuItem);
+    }
+    let container = document.createElement("div");
+    let menuList = document.createElement("div");
+    menuList.classList.add("pop-menu-list");
+    for (let i = 0; i < list.length; i++) {
+        const element = list[i];
+        let menuItem = document.createElement("div");
+        menuItem.classList.add("pop-menu-item");
+        if (element.icon) {
+            let icon = document.createElement("i");
+            icon.classList.add(element.icon);
+            menuItem.appendChild(icon);
+        }
+        if (element.title) {
+            let title = document.createElement("span");
+            let text = document.createTextNode(element.title);
+            title.appendChild(text);
+            menuItem.appendChild(title);
+        }
+        if (element.operation) {
+            menuItem.addEventListener("click", element.operation);
+        }
+        menuList.appendChild(menuItem);
+    }
+    container.appendChild(menuList);
+    const clickOutside = (e) => {
+        e.preventDefault();
+        if (container === null) {
+            document.removeEventListener("click", clickOutside);
+            return;
+        }
+        if (container.parentNode && e.target !== container) {
+            container.parentNode.removeChild(container);
+            document.removeEventListener("click", clickOutside);
+            container = null;
+        }
+    };
+    container.addEventListener("click", (e) => {
+        e.preventDefault();
+        container.parentNode.removeChild(container);
+        container = null;
+        document.removeEventListener("click", clickOutside);
+    })
+    document.addEventListener("click", clickOutside);
+    container.classList.add("pop-menu-container");
+    container.id = "pop-menu";
+    document.body.appendChild(container);
+    let {offsetWidth, offsetHeight} = document.body;
+    let width = container.offsetWidth;
+    let height = container.offsetHeight;
+    if (width + x > offsetWidth)
+        x -= width - 10;
+    if (height + y > offsetHeight)
+        y -= height - 10;
+    container.style.top = y + "px";
+    container.style.left = x + "px";
+    container.style.zIndex = "9999";
+}
