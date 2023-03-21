@@ -4,9 +4,19 @@
     <span class="line" v-if="breadcrumb.length>0"></span>
     <el-breadcrumb separator-class="el-icon-arrow-right">
       <el-breadcrumb-item
-          v-for="(item,index) in breadcrumb"
+          :to="{ path: '/back' }"
+          v-if="$route.path!=='/back/home'"
+      >
+        首页
+      </el-breadcrumb-item>
+      <el-breadcrumb-item
+          v-for="(item,index) in breadcrumb.filter(e=>{
+            return e.meta && e.meta.title && e.meta.title.length>0;
+          })"
           :key="index"
-          :to="{ path: item.link }">{{ item.title }}
+          :to="{ path: item.path }"
+      >
+        {{ item.meta.title }}
       </el-breadcrumb-item>
     </el-breadcrumb>
   </div>
