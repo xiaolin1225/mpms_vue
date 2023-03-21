@@ -11,9 +11,9 @@
           <el-dropdown-item command="create">新建文件夹</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
-      <div class="file-path-container">
-        <input v-model="path" placeholder="请输入文件路径" class="file-path-input" @blur="handlePathChange"/>
-      </div>
+      <!--      <div class="file-path-container">-->
+      <!--        <input v-model="path" placeholder="请输入文件路径" class="file-path-input" @blur="handlePathChange"/>-->
+      <!--      </div>-->
     </template>
     <template #right>
       <el-form v-model="filter" inline class="form">
@@ -82,12 +82,10 @@ export default {
         lazy: true,
         checkStrictly: true,
         async lazyLoad(node, resolve) {
-          console.log(node)
           const {data, level} = node;
           let fid = 0;
           if (level !== 0)
             fid = data.id;
-          console.log(fid, level);
           let res = await requestFileType({fid, lazy: true})
           resolve(res.data);
         }

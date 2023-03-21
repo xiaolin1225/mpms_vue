@@ -28,7 +28,7 @@
           <el-input v-model="info.alt" placeholder="请输入文件缺失时替换的文字"></el-input>
         </el-form-item>
         <el-form-item label="描述">
-          <el-input type="textarea" maxlength="300" show-word-limit v-model="info.description"
+          <el-input type="textarea" maxlength="600" show-word-limit v-model="info.description"
                     placeholder="请输入文件描述"></el-input>
         </el-form-item>
         <el-form-item
@@ -172,6 +172,7 @@ export default {
     addMeta() {
       this.metaList.push({
         id: this.metaList.length + 1,
+        status: 3,
         label: "",
         value: ""
       })
@@ -189,6 +190,7 @@ export default {
         this.metaList = this.metaList.filter(item => item.id !== id);
       }).catch(() => {
       });
+      // this.metaList = this.metaList.filter(item => item.id !== id);
     },
     saveFileInfo() {
       let data = {
@@ -202,7 +204,7 @@ export default {
         if (valid) {
           saveFileInfo(id, data).then(res => {
             this.$message.success(res.message);
-            this.$emit("closeDialog");
+            this.$emit("closeDialog", this.info);
           });
         }
       });

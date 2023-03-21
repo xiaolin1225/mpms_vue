@@ -1,169 +1,160 @@
 <template>
   <div class="container" v-loading="loading">
     <div class="card">
-      <ToolBar v-model="path" @change="handlePathChange" @handleUploadButtonClick="isUploadDialogOpen = true"
-               @handleDropdownClick="handleDropdownClick"/>
+      <BaseBar>
+        <template #left>
+          <el-dropdown placement="bottom" @command="handleDropdownClick">
+            <el-button type="primary">
+              新建 / 上传<i class="el-icon-arrow-down el-icon--right"></i>
+            </el-button>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item icon="el-icon-upload" command="upload">上传文件</el-dropdown-item>
+              <el-dropdown-item icon="el-icon-folder-add" command="create">新建文件夹</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+        </template>
+        <template #right>
+          <el-form v-model="filter" inline class="form">
+            <el-form-item label="查询范围">
+              <el-select
+                  v-model="filter.range"
+                  placeholder="请选择查询范围">
+                <el-option label="此文件夹" :value="1"/>
+                <el-option label="所有文件" :value="2"/>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="文件类型">
+              <el-cascader
+                  v-model="filter.type"
+                  :options="options"
+                  :props="props"
+                  clearable
+              ></el-cascader>
+            </el-form-item>
+            <el-form-item label="关键词">
+              <el-input v-model="filter.keyword" placeholder="请输入关键词"></el-input>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="onSubmit">查询</el-button>
+            </el-form-item>
+          </el-form>
+        </template>
+      </BaseBar>
     </div>
-    <!--    <div class="fitter-bar mt p">-->
-    <!--      <BaseBar>-->
-    <!--        <template #left>-->
-    <!--          <span v-show="checkedMode">已选择 <span class="emphasize">{{ checkedItemsLength }}</span> 项，共 <span-->
-    <!--              class="emphasize">{{ list.length }}</span> 项</span>-->
-    <!--          <el-button :type="allChecked?'primary':''" round @click="checkedAll" class="ml"-->
-    <!--                     v-show="checkedMode">全选-->
-    <!--          </el-button>-->
-    <!--        </template>-->
-    <!--        <template #right>-->
-    <!--          <el-button :type="checkedMode?'primary':''" icon="el-icon-success" round @click="changeCheckMode">批量操作-->
-    <!--          </el-button>-->
-    <!--          <el-dropdown class="ml" trigger="click" @command="changeDisplayType">-->
-    <!--            <span class="el-dropdown-link">-->
-    <!--              <span class="mode-icon"><SvgIcon :name="displayType === 'card' ? 'card-mode' : 'list-mode'"/></span>-->
-    <!--              {{ displayType === 'card' ? '卡片模式' : '列表模式' }}-->
-    <!--              <i class="el-icon-arrow-down el-icon&#45;&#45;right"></i>-->
-    <!--            </span>-->
-    <!--            <el-dropdown-menu slot="dropdown">-->
-    <!--              <el-dropdown-item command="card" v-show="displayType!=='card'">-->
-    <!--                <span class="mode-icon" style="display: inline-block;width: 14px;height: 14px;">-->
-    <!--                  <SvgIcon name="card-mode"/>-->
-    <!--                </span> 卡片模式-->
-    <!--              </el-dropdown-item>-->
-    <!--              <el-dropdown-item command="list" v-show="displayType!=='list'">-->
-    <!--                <span class="mode-icon" style="display: inline-block;width: 14px;height: 14px;">-->
-    <!--                  <SvgIcon name="list-mode"/>-->
-    <!--                </span> 列表模式-->
-    <!--              </el-dropdown-item>-->
-    <!--            </el-dropdown-menu>-->
-    <!--          </el-dropdown>-->
-
-    <!--        </template>-->
-    <!--      </BaseBar>-->
-    <!--    </div>-->
-    <div class="card mt file-list-container" v-show="displayType==='list'">
-      <el-table
-          :data="list"
-          ref="fileListTable"
-          @selection-change="itemCheckedToggle"
-      >
-        <el-table-column
-            type="selection"
-            width="55"
-            :selectable="()=>checkedMode"
-        >
-        </el-table-column>
-        <el-table-column
-            prop="title"
-            label="内容详情"
-            min-width="300px"
-        >
-          <template v-slot="scope">
-            <MediaCard :content="scope.row" class="list-item-card"/>
-          </template>
-        </el-table-column>
-        <el-table-column
-            prop="type.name"
-            label="文件类型"
-            width="150"
-            align="center">
-        </el-table-column>
-        <el-table-column
-            prop="suffix"
-            label="后缀名"
-            width="150"
-            align="center">
-        </el-table-column>
-        <el-table-column
-            prop="createTime"
-            label="创建时间"
-            width="200"
-            align="center">
-        </el-table-column>
-        <el-table-column
-            prop="id"
-            label="操作"
-            width="200"
-            align="center">
-          <template v-slot="scope">
-            <el-tooltip class="opt-btn-tip" content="预览" placement="top">
-              <el-button icon="el-icon-view" circle @click="itemClick(scope.row)"/>
-            </el-tooltip>
-            <el-tooltip class="opt-btn-tip" content="编辑" placement="top">
-              <el-button type="primary" icon="el-icon-edit" circle @click="editItem(scope.row.id)"/>
-            </el-tooltip>
-            <el-tooltip class="opt-btn-tip" content="删除" placement="top">
-              <el-button type="danger" icon="el-icon-delete" circle @click="deleteItem(scope.row.id)"/>
-            </el-tooltip>
-          </template>
-        </el-table-column>
-        <!--        <BasePagination v-model="current" :page-num="pageNum" :total="total" @size-change="handleSizeChange"/>-->
-      </el-table>
-    </div>
-    <div class="media-card-list mt" ref="mediaCardList" v-show="displayType==='card'">
-      <div class="card-column" v-for="(item,index) in waterfallArray" :key="index">
-        <div class="card-item back-item" v-if="parentFolder&&index===0">
-          <MediaCard :content="parentFolder" @itemClick="itemClick"/>
+    <div class="media-card-list mt" id="mediaList" ref="mediaCardList">
+      <div class="media-item" :class="isChecked(item.id)?'is-checked':''" v-for="item in list" :key="item.id"
+           @click.right.prevent.stop="handleItemRightClick(item.id,$event)">
+        <div class="media-item-header">
+          <el-checkbox :value="isChecked(item.id)" @click.native.prevent="itemCheckToggle(item.id)"/>
         </div>
-        <div class="card-item" v-for="citem in waterfallArray[index]" :key="citem.id">
-          <div class="card-item-opt-container" :class="citem.isDir?'is-dir':''" v-show="!checkedMode">
-            <el-tooltip class="opt-btn-tip" content="编辑" placement="top">
-              <el-button type="primary" icon="el-icon-edit" size="mini" circle @click="editItem(citem.id)"/>
-            </el-tooltip>
-            <el-tooltip class="opt-btn-tip" content="删除" placement="top">
-              <el-button type="danger" icon="el-icon-delete" size="mini" circle @click="deleteItem(citem.id)"/>
-            </el-tooltip>
+        <div @click="handleItemClick(item.id,item.isDir)">
+          <div class="media-thumb-wrap">
+            <div class="type-icon">
+              <SvgIcon :name="`type-${item.type.parent.name}`"/>
+            </div>
+            <BaseImage :src="item.thumb" fit="cover" @load="loadThumb" style="transform: scale(1.1);"/>
           </div>
-          <MediaCard :content="citem" :checkedMode="checkedMode" :checked="isItemChecked(citem.id)"
-                     @itemClick="itemClick"/>
+          <el-popover
+              placement="bottom"
+              width="200"
+              trigger="hover"
+          >
+            <div>名称：<span>{{ item.title + (item.suffix ? "." + item.suffix : "") }}</span></div>
+            <div>大小：<span>{{ fileSizeByteToM(item.size, 2) }}</span></div>
+            <div>创建日期：<span>{{ item.createTime }}</span></div>
+            <div class="media-info-wrap" slot="reference">
+              <h2 class="title">
+                {{ item.title && item.title.length > 18 ? item.title.slice(0, 19) + "..." : item.title }}
+              </h2>
+              <h2 class="date">{{ item.createTime }}</h2>
+            </div>
+          </el-popover>
         </div>
-
       </div>
     </div>
-    <BasePagination v-model="current" :page-num="pageNum" :total="total" :page-size="size"
-                    @size-change="handleSizeChange" class="mt"/>
     <el-dialog
-        v-if="viewMode"
-        :modal-append-to-body="false"
-        :visible.sync="viewMode"
-        fullscreen
-        :title="tempItemContent.title"
-        center
-    >
-      <MediaPreview :content="tempItemContent" @get-instance="getInstance"/>
-    </el-dialog>
-
-    <el-dialog
-        v-if="isDialogOpen"
-        title="文件详情"
-        :visible.sync="isDialogOpen"
-        width="80%"
-        center>
-      <MediaDetails ref="MediaDetails" :content="tempItemContent" @closeDialog="isDialogOpen = false;"
-                    @get-instance="getInstance"/>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="isDialogOpen = false">取 消</el-button>
-        <el-button type="primary"
-                   @click="$refs.MediaDetails.saveFileInfo();">保 存</el-button>
-      </span>
-    </el-dialog>
-
-    <el-dialog
-        :visible.sync="isUploadDialogOpen"
         title="上传文件"
-        center>
+        :visible.sync="uploadDialogOpen"
+        width="50%"
+        center
+        class="upload-container"
+        append-to-body
+    >
       <el-upload
-          class="upload-container"
+          ref="upload"
+          class="drag-upload-container"
           drag
-          action="/api/file/upload"
+          action="api/file/upload"
           multiple
-          :file-list="uploadFileList"
-          :before-upload="handleBeforeUpload"
-          :on-success="handleUploadSuccess"
           :data="uploadFileData"
+          :before-upload="handleBeforeUpload"
+          :auto-upload="false"
+          :show-file-list="false"
+          :on-change="handleUploadFileChange"
+          :on-progress="handleUploadFileProgress"
+          :on-success="handleUploadFileSuccess"
       >
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-        <div class="el-upload__tip" slot="tip">单个文件大小不超过300MB</div>
+        <div class="el-upload__tip" slot="tip">只能上传不超过300MB的文件</div>
       </el-upload>
+      <div class="upload-file-list-container" v-if="uploadFileList.length>0">
+        <div class="list-header">
+          <div class="left-wrap">
+            <div class="title">
+              传输列表
+            </div>
+          </div>
+          <div class="right-wrap">
+            <div class="operation">
+              <el-button size="mini" @click="startUploadAll">全部开始</el-button>
+              <el-button size="mini">全部暂停</el-button>
+              <el-button size="mini" @click="cancelUploadAll">全部取消</el-button>
+            </div>
+          </div>
+        </div>
+        <div class="upload-file-list">
+          <div class="file-item" v-for="item in uploadFileList" :key="item.uid">
+            <div class="left-wrap">
+              <div class="icon">
+                <svg-icon :name="getTypeIcon(item.raw.type.split('/')[0])"/>
+              </div>
+              <div class="info">
+                <div class="title">{{ item.name }}</div>
+                <div class="size">
+                  <span class="loaded">0B</span>
+                  /
+                  <span class="total">{{ fileSizeByteToM(item.size, 2) }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="right-wrap">
+              <!--            <div class="speed">30MB/S</div>-->
+              <div class="progress">
+                <div class="bar" :style="`--percentage:${item.percentage}%`"></div>
+                <div class="status">{{ getUploadFileStatus(item.status) }}</div>
+              </div>
+              <div class="operation">
+                <el-button trpe="primary" circle>
+                  <svg-icon name="play" style="width: 1rem;height: 1rem;"/>
+                </el-button>
+                <el-button type="danger" circle icon="el-icon-close"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
+    <el-dialog
+        @close="handleDialogClose"
+        :visible.sync="viewDialogOpen"
+        width="75%"
+        center
+        class="viewer-container"
+        append-to-body
+    >
+      <MediaPreview :id="viewId" :isEdit="isEdit" @get-instance="getInstance" v-if="viewDialogOpen"
+                    @fileInfoSaved="getFolderInfo(path)"/>
     </el-dialog>
   </div>
 </template>
@@ -176,57 +167,117 @@ import MediaDetails from "@/views/Media/MediaList/MediaDetails/index.vue";
 import MediaPreview from "@/views/Media/MediaList/MediaPreview/index.vue";
 import BasePagination from "@/components/BasePagination/index.vue";
 import file2md5 from "file2md5";
-import {createFolder, deleteFile, requestFileList, requestFolderInfo, saveFileInfo} from "@/api/file";
+import {deleteFiles, requestFileList, requestFileType, requestFolderInfo} from "@/api/file";
+import BaseImage from "@/components/BaseImage/index.vue";
+import {createPopMenu} from "@/utils";
+import {fileSizeByteToM} from "@/utils/fileUtils";
 
 export default {
   name: "MediaList",
-  components: {BasePagination, MediaPreview, MediaDetails, BaseBar, MediaCard, ToolBar},
+  components: {BaseImage, BasePagination, MediaPreview, MediaDetails, BaseBar, MediaCard, ToolBar},
   data() {
     return {
-      list: [],
-      checkedMode: false,
-      displayType: "card",
-      waterfallArray: [],
-      checkedItems: [],
-      allChecked: false,
-      isDialogOpen: false,
-      isUploadDialogOpen: false,
-      tempItemContent: {},
-      playerInstance: null,
-      viewMode: false,
+      instance: null,
+      uploadDialogOpen: false,
+      viewDialogOpen: false,
       uploadFileList: [],
-      uploadFileData: {},
-      path: "/资源库",
-      lastPath: "/资源库",
-      parentFolder: null,
-      current: 1,
-      pageNum: 0,
-      size: 10,
-      total: 0,
       loading: false,
-      folder: {}
+      folder: null,
+      loadImages: 0,
+      list: [],
+      checkedList: [],
+      current: 1,
+      size: 10,
+      pageNum: 0,
+      total: 0,
+      rightMenu: {
+        single: [
+          {
+            title: "打开",
+            icon: "el-icon-folder-opened",
+            operation: this.operations("view")
+          },
+          {
+            title: "编辑",
+            icon: "el-icon-edit",
+            operation: this.operations("edit")
+          },
+          {
+            title: "复制",
+            icon: "el-icon-document-copy",
+            operation: this.operations("copy")
+          },
+          {
+            title: "移动",
+            icon: "el-icon-rank",
+            operation: this.operations("move")
+          },
+          {
+            title: "删除",
+            icon: "el-icon-delete-solid",
+            operation: this.operations("delete")
+          },
+        ],
+        multiple: [
+          {
+            title: "复制",
+            icon: "el-icon-document-copy",
+            operation: this.operations("copy")
+          },
+          {
+            title: "移动",
+            icon: "el-icon-rank",
+            operation: this.operations("move")
+          },
+          {
+            title: "删除",
+            icon: "el-icon-delete-solid",
+            operation: this.operations("delete")
+          },
+        ],
+        default: [
+          {
+            title: "查看",
+            operation: this.operations("viewMode")
+          },
+          {
+            title: "排序方式",
+            operation: this.operations("order")
+          },
+        ]
+      },
+      filter: {
+        range: 1,
+        type: [],
+        keyword: ""
+      },
+      options: [],
+      props: {
+        lazy: true,
+        checkStrictly: true,
+        async lazyLoad(node, resolve) {
+          const {data, level} = node;
+          let fid = 0;
+          if (level !== 0)
+            fid = data.id;
+          let res = await requestFileType({fid, lazy: true})
+          resolve(res.data);
+        }
+      },
+      uploadFileData: {
+        md5: "",
+        folderId: -1
+      },
+      viewId: -1,
+      isEdit: false
     }
   },
   methods: {
-    handleDropdownClick(command) {
-      switch (command) {
-        case "create":
-          this.$prompt('请输入文件夹名称', '新建文件夹', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            inputPattern: /^[\s\S]*.*[^\s][\s\S]*$/,
-            inputErrorMessage: '文件夹名称不能为空'
-          }).then(({value}) => {
-            createFolder({title: value, folderId: this.folder.id}).then(res => {
-              this.$message.success(res.message);
-              this.getFolderInfo();
-            })
-          });
-          break;
-        case "upload":
-          this.isUploadDialogOpen = true;
-          break;
-      }
+    fileSizeByteToM,
+    handleUploadFileChange(file, fileList) {
+      console.log(file, fileList)
+      this.uploadFileList = fileList.reverse();
+      console.log(this.uploadFileList)
     },
     computeWaterfallArray(arr) {
       let clientWidth = document.body.clientWidth;
@@ -251,110 +302,157 @@ export default {
       }
       this.waterfallArray = waterfallArray;
     },
-    onSubmit() {
-      console.log(this.form)
-    },
-    changeCheckMode() {
-      this.checkedMode = !this.checkedMode;
-    },
-    changeDisplayType(type) {
-      this.displayType = type;
-      // this.checkedMode = false;
-    },
-    itemCheckedToggle(content) {
-      if (content instanceof Array) {
-        this.checkedItems = content;
-      } else {
-        let index = this.checkedItems.findIndex(item => item.id === content.id);
-        if (index === -1) {
-          this.checkedItems.push(content);
-          this.$refs.fileListTable.toggleRowSelection(content, true);
-        } else {
-          this.checkedItems.splice(index, 1);
-          this.$refs.fileListTable.toggleRowSelection(content, false);
-        }
+    calculateColumn() {
+      let container = this.$refs.mediaCardList;
+      let imageWidth = 200;
+      let containerWidth = container.clientWidth;
+      let columns = Math.floor(containerWidth / imageWidth);
+      columns = columns > 1 ? columns : 2;
+      let spaceNumber = columns + 1;
+      let leftSpace = containerWidth - columns * imageWidth;
+      let space = leftSpace / spaceNumber;
+      let nextTops = new Array(columns).fill(0);
+      for (let i = 0; i < container.children.length; i++) {
+        let child = container.children[i];
+        let minTop = Math.min.apply(null, nextTops)
+        child.style.top = minTop + 'px';
+        let index = nextTops.indexOf(minTop);
+        nextTops[index] += child.clientHeight + space;
+        let left = (index + 1) * space + index * imageWidth;
+        child.style.left = left + "px";
       }
+      let max = Math.max.apply(null, nextTops);
+      container.style.height = max + "px";
     },
-    itemClick(isDir, content) {
-      if (isDir) {
-        this.path = content.path;
-        this.handlePathChange();
-      } else {
-        if (this.checkedMode && this.displayType === 'card') {
-          this.itemCheckedToggle(content);
-        } else {
-          this.playerInstance = null;
-          this.setTempItemContent(content);
-          this.viewMode = true;
-        }
-      }
+    getFolderInfo(path) {
+      this.loading = true;
+      requestFolderInfo({path}).then(async res => {
+        this.folder = res.data
+        await this.getFileList(this.folder.id);
+      }).catch(error => {
+        console.log(error);
+        this.loading = false;
+      })
     },
-    isItemChecked(id) {
-      let index = this.checkedItems.findIndex(item => item.id === id);
-      return index !== -1;
-    },
-    checkedAll() {
-      this.$refs.fileListTable.toggleAllSelection();
-      if (this.allChecked) {
-        this.checkedItems = [];
-      } else {
-        this.checkedItems = {...this.list}
-      }
-    },
-    editItem(id) {
-      let content = this.list.find(item => item.id === id);
-      if (content.isDir) {
-        this.$prompt('请输入文件夹名称', '修改文件夹名称', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          inputPattern: /^[\s\S]*.*[^\s][\s\S]*$/,
-          inputErrorMessage: '文件夹名称不能为空'
-        }).then(({value}) => {
-          let data = {title: value};
-          saveFileInfo(content.id, data);
-        });
-      } else {
-        this.tempItemContent = {...content}
-        this.isDialogOpen = true;
-      }
-    },
-    deleteItem(id) {
-      this.$confirm('此操作将永久删除该文件/文件夹, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        deleteFile(id).then(res => {
-          this.$message({
-            type: 'success',
-            message: '删除成功!'
-          });
-          // this.getFileList();
-        }).finally(() => {
-          this.getFolderInfo();
+    getFileList(id) {
+      this.loadImages = 0;
+      requestFileList({id, current: this.current, size: this.size}).then(res => {
+        let {pageNum, records, total} = res.data;
+        this.pageNum = pageNum;
+        this.list = records;
+        this.total = total;
+        this.$nextTick(() => {
+          this.calculateColumn();
+          this.loading = false;
         })
-      });
+      }).catch(error => {
+        console.log(error);
+        this.loading = false;
+      })
     },
-    getInstance(instance) {
-      this.playerInstance = instance;
-    },
-    setTempItemContent(content) {
-      this.tempItemContent = null;
-      this.tempItemContent = {...content};
-    },
-    clearTempContent(value) {
-      if (!value) {
-        this.tempItemContent = {};
-        if (this.playerInstance) {
-          this.playerInstance.destroy();
-          this.playerInstance = null;
-        }
+    handleDropdownClick(command) {
+      switch (command) {
+        case "upload":
+          this.uploadDialogOpen = true;
+          break;
+        case "create":
+          break;
       }
+    },
+    loadThumb() {
+      this.loadImages++;
+    },
+    isChecked(value) {
+      return this.checkedList.indexOf(value) !== -1;
+    },
+    itemCheckToggle(id, value) {
+      let index = this.checkedList.indexOf(id);
+      if (index === -1) {
+        this.checkedList.push(id);
+      } else {
+        if (!value)
+          this.checkedList.splice(index, 1)
+      }
+    },
+    handleItemRightClick(id, e) {
+      if (this.checkedList.length > 1) {
+        createPopMenu(e.x, e.y, this.rightMenu.multiple);
+      } else {
+        this.checkedList.splice(0);
+        this.itemCheckToggle(id, true);
+        createPopMenu(e.x, e.y, this.rightMenu.single);
+      }
+    },
+    createDefaultRightMenu(e) {
+      e.preventDefault();
+      createPopMenu(e.x, e.y, this.rightMenu.default);
+    },
+    operations(command) {
+      let fun = null;
+      switch (command) {
+        case "view":
+          fun = () => {
+            this.viewId = this.checkedList[0];
+            this.viewDialogOpen = true;
+            this.isEdit = false;
+            console.log("查看文件", this.checkedList[0]);
+          };
+          break;
+        case "edit":
+          fun = () => {
+            this.viewId = this.checkedList[0];
+            this.viewDialogOpen = true;
+            this.isEdit = true;
+            console.log("编辑文件", this.checkedList[0]);
+          };
+          break;
+        case "copy":
+          fun = () => {
+            console.log("复制文件", this.checkedList);
+          };
+          break;
+        case "move":
+          fun = () => {
+            console.log("移动文件", this.checkedList);
+          };
+          break;
+        case "delete":
+          fun = () => {
+            this.$confirm(this.checkedList.length > 1 ? '此操作将永久删除这些文件, 是否继续?' : '此操作将永久删除该文件, 是否继续?', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'danger'
+            }).then(() => {
+              deleteFiles(this.checkedList).then(res => {
+                this.$message({
+                  type: 'success',
+                  message: res.message
+                });
+              })
+            }).finally(() => {
+              this.getFileList(this.folder.id);
+            });
+          };
+          break;
+        case "viewMode":
+          fun = () => {
+            console.log("viewMode");
+          };
+          break;
+        case "order":
+          fun = () => {
+            console.log("order");
+          }
+          break;
+      }
+      return fun;
+    },
+    onSubmit() {
+      console.log(this.filter);
     },
     async handleBeforeUpload(file) {
       try {
-        const md5 = await file2md5(file, {chunkSize: 3 * 1024 * 1024});
-        this.uploadFileData.md5 = md5;
+        this.uploadFileData.md5 = await file2md5(file, {chunkSize: 3 * 1024 * 1024});
         this.uploadFileData.folderId = this.folder.id;
       } catch (e) {
         console.error('error', e);
@@ -362,251 +460,318 @@ export default {
       }
       return true;
     },
-    handlePathChange() {
-      if (this.path === this.lastPath)
-        return;
-      this.getFolderInfo().then(() => {
-        this.lastPath = this.path;
-        this.getFileList();
-      }).catch(() => {
-        this.path = this.lastPath;
-        this.handlePathChange();
-      })
+    handleUploadFileProgress(event, file, fileList) {
+      console.log(event, file, fileList);
     },
-    async getFileList() {
-      this.loading = true;
-      const res = await requestFileList({current: this.current, size: this.size, path: this.path})
-      const page = res.data;
-      this.current = page.current;
-      this.pageNum = page.pageNum;
-      this.total = page.total;
-      this.list = page.records;
-      if (this.folder.folderId !== 0) {
-        let folderRes = await requestFolderInfo({id: this.folder.folderId});
-        this.parentFolder = folderRes.data;
-        this.parentFolder.title = "返回上一级目录"
-        this.parentFolder.thumb = "http://localhost/file/ee7c2165aae94d0fb37b89dd562d5ad9";
-      } else {
-        this.parentFolder = null;
+    handleUploadFileSuccess() {
+      this.getFileList(this.folder.id);
+    },
+    getTypeIcon(type) {
+      console.log(type)
+      let icon = "type-unknown";
+      switch (type) {
+        case "video":
+          icon = "type-video";
+          break;
+        case "image":
+          icon = "type-image";
+          break;
+        case "audio":
+          icon = "type-audio";
+          break;
       }
-      this.computeWaterfallArray(this.list);
-      setTimeout(() => {
-        this.loading = false;
-      }, 1000);
+      return icon;
     },
-    handleSizeChange(val) {
-      this.size = val;
-      this.current = 1;
-      this.getFileList();
+    getUploadFileStatus(status) {
+      switch (status) {
+        case "ready":
+          return "已就绪";
+        case "uploading":
+          return "上传中";
+        case "success":
+          return "已完成";
+        case "cancel":
+          return "已取消";
+      }
     },
-    async getFolderInfo(path) {
-      const res = await requestFolderInfo({path: path ? path : this.path}).catch(() => {
-        this.$message({
-          type: 'error',
-          message: '数据获取失败，请稍后重试'
-        });
-        this.loading = false;
+    startUploadAll() {
+      this.$refs.upload.submit();
+    },
+    pauseUploadAll() {
+
+    },
+    cancelUploadAll() {
+      this.uploadFileList.forEach(item => {
+        this.$refs.upload.abort(item);
+        item.status = "cancel";
+        item.percentage = 0;
       });
-      this.folder = res.data;
-      await this.getFileList();
     },
-    handleUploadSuccess(response, file, fileList) {
-      console.log("response", response);
-      console.log("file", file);
-      console.log("fileList", fileList);
-      setTimeout(() => {
-        this.getFileList();
-      }, 2000);
+    handleItemClick(id, isDir) {
+      if (isDir) {
+        let content = this.list.find(item => item.id === id);
+        this.$router.push({path: "/back/media", query: {path: content.path}})
+      } else {
+        this.viewId = id;
+        this.viewDialogOpen = true;
+        this.isEdit = false;
+      }
     },
-    handleWindowWidthResize() {
-      this.computeWaterfallArray(this.list);
+    getInstance(instance) {
+      this.instance = instance;
+    },
+    handleDialogClose() {
+      if (this.instance) {
+        this.instance.destroy();
+      }
     }
   },
+  props: {},
   computed: {
-    checkedItemsLength() {
-      return this.checkedItems.length;
-    },
-    // path: {
-    //   get() {
-    //     return this.$route.query.path;
-    //   },
-    //   set(val) {
-    //     this.$router.push({
-    //       path: "/back/media",
-    //       params: {lastPath: this.path},
-    //       query: {path: val}
-    //     }).finally(() => {
-    //     });
-    //   }
-    // }
+    path() {
+      return this.$route.query.paht;
+    }
   },
   watch: {
-    current(newVal, oldVal) {
-      if (newVal !== oldVal)
-        this.getFileList();
-    },
-    checkedMode(value) {
-      if (!value) {
-        this.checkedItems = [];
-        this.$refs.fileListTable.clearSelection();
+    loadImages(value) {
+      if (value === this.list.length) {
+        this.calculateColumn();
+        this.loading = false;
       }
-    },
-    checkedItemsLength(length) {
-      this.allChecked = length === this.list.length;
-    },
-    isDialogOpen(value) {
-      this.clearTempContent(value);
-    },
-    viewMode(value) {
-      this.clearTempContent(value);
     }
   },
   mounted() {
-    this.getFolderInfo();
-    window.addEventListener("resize", this.handleWindowWidthResize);
-    // let path = this.$route.query.path;
-    // if (path && path.trim().length > 0) {
-    //   this.path = path;
-    // } else {
-    //   this.$router.push({
-    //     path: "/back/media",
-    //     params: {lastPath: this.path},
-    //     query: {path: "/资源库"}
-    //   }).then((res) => {
-    //     console.log(res)
-    //   })
-    // }
+    if (!this.path) {
+      this.$router.push({path: "/back/media", query: {path: "/资源库"}});
+    }
+    this.getFolderInfo(this.path);
+    // window.addEventListener("resize", this.calculateColumn);
+    // document.querySelector(".page-content").addEventListener("resize", this.calculateColumn)
+    document.querySelector(".page-content").oncontextmenu = this.createDefaultRightMenu;
+    let observer = new ResizeObserver(this.calculateColumn);
+    observer.observe(this.$refs.mediaCardList);
   },
   beforeDestroy() {
-    window.removeEventListener("resize", this.handleWindowWidthResize);
+    window.removeEventListener("resize", this.calculateColumn);
   }
 }
 </script>
 
 <style lang="less" scoped>
-.file-list-container {
-  .list-item-card {
-    width: 300px;
-  }
+.form {
+  margin-bottom: -22px;
 }
 
-.fitter-bar {
-
-  .el-button,
-  .el-button:focus {
-    color: var(--text-light-color);
-    background-color: var(--panel-background-color);
-  }
-
-  .el-button--primary:focus,
-  .el-button--primary {
-    color: var(--text-white);
-    background-color: var(--text-primary-color);
-  }
-
-  .el-dropdown-link {
-    color: var(--text-light-color);
-
-    .mode-icon {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-    }
-  }
-
-}
-
-
-.media-card-list {
-  display: flex;
-
-  .card-column {
-    width: 20%;
-    display: flex;
-    flex-direction: column;
-    margin-left: var(--margin-x);
-
-    &:first-child {
-      margin-left: 0;
-    }
-  }
-
-  .card-item {
+.container {
+  .media-card-list {
     position: relative;
-    margin-top: var(--margin-y);
-    cursor: pointer;
 
-    &:first-child {
-      margin-top: 0;
-    }
-
-    .card-item-opt-container {
-      display: none;
+    .media-item {
       position: absolute;
-      bottom: .5rem;
-      right: .5rem;
-      z-index: 2;
-    }
+      width: 200px;
+      padding: var(--padding-y) var(--padding-x);
+      border-radius: .5rem;
+      cursor: pointer;
 
-    .card-item-opt-container.is-dir {
-      //bottom: .5rem;
-      right: calc(50% - 2rem);
-    }
+      &:hover {
+        .media-item-header {
+          opacity: 1;
+        }
 
-    &:hover .card-item-opt-container {
-      display: block;
-    }
+        background-color: var(--bg-light-primary);
+      }
 
-    //margin-left: var(--margin-x);
-  }
+      &.is-checked {
+        .media-item-header {
+          opacity: 1;
+        }
 
-  .card-item.back-item {
-    :deep(.container) {
-      .file-detail-container {
-        bottom: 15px;
+        background-color: var(--bg-dark-light-primary);
+      }
+
+      .media-thumb-wrap {
+        border-radius: .5rem;
+        overflow: hidden;
+        position: relative;
+
+        .type-icon {
+          position: absolute;
+          right: .5rem;
+          top: .5rem;
+          width: 2rem;
+          height: 2rem;
+          z-index: 2;
+        }
+
+        :deep(.base-image-container) {
+          .image-slot {
+            min-height: 150px;
+          }
+        }
+
+        & > * {
+          display: block;
+        }
+
+      }
+
+      .media-item-header {
+        opacity: 0;
+        margin-bottom: var(--padding-y);
+      }
+
+      .media-info-wrap {
+        max-width: 100%;
+        text-align: center;
 
         .title {
-          color: #77d1ff;
+          line-height: 18px;
+          font-size: 12px;
+          margin-top: 8px;
+          color: #03081a;
+          overflow: hidden;
+          max-height: 36px;
+          word-break: break-all;
+          text-overflow: ellipsis;
+        }
+
+        .date {
+          font-size: 12px;
+          color: #818999;
+          line-height: 18px;
+          margin-top: 2px;
         }
       }
     }
   }
 }
 
-
 .upload-container {
-  width: 100%;
+  //width: 100%;
+  user-select: none;
 
-  :deep(.el-upload) {
-    width: 100%;
-
-    .el-upload-dragger {
+  .drag-upload-container {
+    :deep(.el-upload) {
       width: 100%;
+      height: unset;
+      line-height: unset;
+
+      .el-upload-dragger {
+        width: 100%;
+      }
+
+      .el-upload-list {
+        display: none;
+      }
     }
   }
+
+  .upload-file-list-container {
+    .list-header {
+      padding: var(--padding-y) 0;
+      border-bottom: 1px solid var(--panel-border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .left-wrap {
+        .title {
+          font-size: 1rem;
+          font-weight: 600;
+          letter-spacing: 1px;
+        }
+      }
+
+      .right-wrap {
+
+      }
+    }
+
+    .upload-file-list {
+      max-height: 244px;
+      overflow: auto;
+      border-bottom: 1px solid var(--panel-border-color);
+
+
+      .file-item {
+        padding: var(--padding-y) var(--padding-x);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--panel-border-color);
+
+        &:first-child {
+          border-top-width: 0;
+        }
+
+        .left-wrap {
+          display: flex;
+          align-items: center;
+
+          .icon {
+            width: 3rem;
+            height: 3rem;
+            margin-right: var(--padding-x);
+          }
+
+          .info {
+            .title {
+              font-size: 14px;
+              color: var(--text-default-color);
+            }
+
+            .size {
+              font-size: 12px;
+              color: var(--text-light-color);
+            }
+          }
+        }
+
+        .right-wrap {
+          display: flex;
+          align-items: center;
+
+          .speed {
+            margin-right: var(--padding-x);
+            font-size: 14px;
+            color: var(--text-default-color);
+          }
+
+          .progress {
+            margin-right: var(--padding-x);
+
+            .bar {
+              margin-bottom: 2px;
+              width: 100%;
+              min-width: 150px;
+              height: 20px;
+              background-color: var(--bg-light-primary);
+              background: var(--bg-light-primary) -webkit-linear-gradient(left, var(--bg-dark-primary), var(--bg-dark-primary)) no-repeat 0 0;
+              background-size: var(--percentage) 100%;
+              transition: all .5s linear;
+            }
+
+            .status {
+              font-size: 12px;
+              color: var(--text-light-color);
+            }
+          }
+
+          .operation {
+            display: flex;
+            align-items: center;
+
+          }
+        }
+      }
+    }
+  }
+
 }
 
-@media screen and (max-width: 1400px) {
-  .card-column {
-    width: 25% !important;
-  }
+.viewer-container {
+  max-height: 100%;
+  overflow: auto;
 }
 
-@media screen and (max-width: 992px) {
-  .card-column {
-    width: 33.3333% !important;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .card-column {
-    width: 50% !important;
-  }
-}
-
-@media screen and (max-width: 576px) {
-  .card-column {
-    width: 100% !important;
-  }
-}
 </style>
