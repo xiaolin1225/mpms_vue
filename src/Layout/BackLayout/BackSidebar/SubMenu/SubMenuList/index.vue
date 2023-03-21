@@ -1,21 +1,18 @@
 <template>
-  <el-menu>
-  <el-submenu  index="1">
-    <template #title>
-      <i class="el-icon-location"></i>
-      <span>仪表盘</span>
-    </template>
-    <el-submenu index="1-4">
-      <template #title>选项4</template>
-      <el-menu-item index="1-4-1">选项1</el-menu-item>
-    </el-submenu>
-  </el-submenu>
+  <el-menu router :default-active="$route.path">
+    <submenu-item v-for="item in list" :key="item.id" :content="item"/>
   </el-menu>
 </template>
 
 <script>
+import SubmenuItem from "@/Layout/BackLayout/BackSidebar/SubMenu/SubMenuItem/index.vue";
+
 export default {
-  name: "SubMenuList"
+  name: "SubMenuList",
+  components: {SubmenuItem},
+  props: {
+    list: Array
+  }
 }
 </script>
 

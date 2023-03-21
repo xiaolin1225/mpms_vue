@@ -1,7 +1,7 @@
 <template>
-<div class="submenu-container">
-<SubMenuList/>
-</div>
+  <div class="submenu-container">
+    <SubMenuList :list="list"/>
+  </div>
 </template>
 
 <script>
@@ -9,12 +9,15 @@ import SubMenuList from "@/Layout/BackLayout/BackSidebar/SubMenu/SubMenuList/ind
 
 export default {
   name: "SubMenu",
-  components: {SubMenuList}
+  components: {SubMenuList},
+  props: {
+    list: Array
+  }
 }
 </script>
 
 <style scoped>
-.submenu-container{
+.submenu-container {
   width: calc(var(--back-sidebar-main-menu-width) + var(--back-sidebar-sub-menu-width));
   height: calc(100% - var(--back-header-height));
   position: fixed;

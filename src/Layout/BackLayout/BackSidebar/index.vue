@@ -1,22 +1,27 @@
 <template>
-<div class="container">
-  <MainMenu/>
-  <SubMenu/>
-</div>
+  <div class="container">
+    <MainMenu :list="mainMenus"/>
+    <SubMenu :list="subMenus"/>
+  </div>
 </template>
 
 <script>
 import MainMenu from "./MainMenu";
 import SubMenu from "./SubMenu";
+import {mapGetters} from "vuex";
+import {getMenuByPid} from "@/utils/menuUtils";
 
 export default {
   name: "BackSidebar",
-  components: {SubMenu, MainMenu}
+  components: {SubMenu, MainMenu},
+  computed: {
+    ...mapGetters("menu", ["mainMenus", "subMenus"]),
+  },
 }
 </script>
 
 <style scoped>
-.container{
+.container {
   /*width: calc(var(--back-sidebar-main-menu-width) + var(--back-sidebar-sub-menu-width));*/
   /*height: 100%;*/
   /*position: fixed;*/

@@ -1,6 +1,7 @@
 <template>
   <ul class="menu-list">
-    <MainMenuItem v-for="(item,index) in list" :key="index" :icon="item.icon" :link="item.link" :title="item.title"/>
+    <MainMenuItem v-for="(item,index) in list" :key="index" :id="item.id" :icon="item.icon" :link="item.path"
+                  :title="item.title"/>
   </ul>
 </template>
 

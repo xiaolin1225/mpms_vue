@@ -9,6 +9,8 @@
 </template>
 
 <script>
+import {mapActions} from "vuex";
+
 export default {
   name: "MainMenuItem",
   data() {
@@ -17,6 +19,7 @@ export default {
     }
   },
   props: {
+    id: Number,
     icon: String,
     activeIcon: String,
     svgIcon: String,
@@ -61,6 +64,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions("menu", ["setSubmenus"]),
     handleItemClick() {
       this.$emit("handleItemClick");
       if (!this.isActive) {
@@ -68,7 +72,14 @@ export default {
       }
     },
     setActiveStatus() {
-      this.isActive = this.link === this.currentPath;
+      let index = this.$route.matched.findIndex(item => item.path === this.link);
+      if (index !== -1) {
+        this.setSubmenus(this.id);
+        this.isActive = true;
+      } else {
+        this.isActive = false;
+      }
+      // this.isActive = this.link === this.currentPath;
     }
   },
   mounted() {
@@ -106,6 +117,7 @@ export default {
   .title {
     font-size: .5rem;
     margin-top: .1rem;
+    text-align: center;
   }
 
   &.active {
