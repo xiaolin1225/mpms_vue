@@ -6,8 +6,8 @@
     <div class="sidebar-container">
       <BackSidebar/>
     </div>
-    <div class="main-container">
-      <PageTitle :title="$route.meta.title" :breadcrumb="$route.meta.path"/>
+    <div class="main-container" id="main-container">
+      <PageTitle :title="$route.meta.title" :breadcrumb="$route.matched"/>
       <div class="page-content">
         <transition name="page-change">
           <router-view/>
