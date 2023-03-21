@@ -1,39 +1,48 @@
 <template>
-  <el-image :src="imageSrc"
-            :fit="imageFit"
-            :alt="imageAlt"
-            :referrer-policy="imageReferrerPolicy"
-            :lazy="imageLazy"
-            :scroll-container="imageScrollContainer"
-            :preview-src-list="imagePreviewSrcList"
-            :z-index="imageZIndex"
-            :initial-index="imageInitialIndex"
-            class="image"
-            @load="imageLoad"
-            @error="imageLoadError">
-    <div slot="placeholder" class="image-slot">
+  <div class="base-image-container">
+    <el-image :src="imageSrc"
+              :fit="imageFit"
+              :alt="imageAlt"
+              :referrer-policy="imageReferrerPolicy"
+              :lazy="imageLazy"
+              :scroll-container="imageScrollContainer"
+              :preview-src-list="imagePreviewSrcList"
+              :z-index="imageZIndex"
+              :initial-index="imageInitialIndex"
+              class="image"
+              @load="imageLoad"
+              @error="imageLoadError"
+              v-if="imageSrc!==''&&!loading"
+    >
+      <div slot="error" class="image-slot">
+        <i class="el-icon-picture-outline"></i>
+      </div>
+      <div slot="placeholder" class="image-slot">
+        <i class="el-icon-loading"></i>
+      </div>
+    </el-image>
+    <div class="image-slot" v-else>
       <i class="el-icon-loading"></i>
     </div>
-    <div slot="error" class="image-slot">
-      <i class="el-icon-picture-outline"></i>
-    </div>
-  </el-image>
+  </div>
+
 </template>
 
 <script>
 export default {
   name: "BaseImage",
   data: () => ({
-    imageSrc: "",
-    imageFit: "contain",
-    imageAlt: "",
-    imageReferrerPolicy: "",
-    imageLazy: false,
-    imageScrollContainer: "",
-    imagePreviewSrcList: [],
-    imageZIndex: 9999,
-    imageInitialIndex: 0,
+    // imageSrc: "",
+    // imageFit: "contain",
+    // imageAlt: "",
+    // imageReferrerPolicy: "",
+    // imageLazy: false,
+    // imageScrollContainer: "",
+    // imagePreviewSrcList: [],
+    // imageZIndex: 9999,
+    // imageInitialIndex: 0,
     intervalId: null,
+    loading: false
   }),
   props: {
     src: {
@@ -53,13 +62,43 @@ export default {
     "initial-index": Number,
     option: Object,
   },
-  computed: {},
-  methods: {
-    imageLoadError() {
-      this.$emit("error");
+  computed: {
+    imageSrc() {
+      return this.option ? this.option.src : this.src;
     },
-    imageLoad() {
-      this.$emit("load");
+    imageFit() {
+      return this.option ? this.option.fit : this.fit;
+    },
+    imageAlt() {
+      return this.option ? this.option.alt : this.alt;
+    },
+    imageReferrerPolicy() {
+      return this.option ? this.option.referrerPolicy : this.referrerPolicy;
+    },
+    imageLazy() {
+      return this.option ? this.option.lazy : this.lazy;
+    },
+    imageScrollContainer() {
+      return this.option ? this.option.scrollContainer : this.scrollContainer;
+    },
+    imagePreviewSrcList() {
+      return this.option ? this.option.previewSrcList : this.previewSrcList;
+    },
+    imageZIndex() {
+      return this.option ? this.option.zIndex : this.zIndex;
+    },
+    imageInitialIndex() {
+      return this.option ? this.option.initialIndex : this.initialIndex;
+    },
+  },
+  methods: {
+    imageLoadError(e) {
+      this.$emit("error", e);
+      this.loading = false;
+    },
+    imageLoad(e) {
+      this.$emit("load", e);
+      this.loading = false;
     },
     setData() {
       if (this.option) {
@@ -87,16 +126,18 @@ export default {
   },
   mounted() {
     let tryTimes = 0;
-    this.intervalId = setInterval(() => {
-      if (this.option || this.src || tryTimes > 10) {
-        clearInterval(this.intervalId);
-        this.setData();
-      }
-      tryTimes++;
-    }, 1000);
+    // this.intervalId = setInterval(() => {
+    //   if (this.option || this.src || tryTimes > 10) {
+    //     clearInterval(this.intervalId);
+    //     this.setData();
+    //     this.loading = false;
+    //   }
+    //   tryTimes++;
+    // }, 1000);
   },
   beforeDestroy() {
     clearInterval(this.intervalId);
+    this.loading = false;
   },
 }
 </script>
@@ -106,17 +147,17 @@ export default {
   width: 100%;
   height: 100%;
   user-select: none;
+}
 
-  .image-slot {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-default-color);
-    background-color: var(--bg-dark-gray);
-  }
+.image-slot {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-default-color);
+  background-color: var(--bg-dark-gray);
 }
 </style>
