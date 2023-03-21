@@ -124,8 +124,10 @@ export default {
     volumeProgressChange(value) {
       if (value === 0)
         this.isMute = true;
-      else
+      else {
+        this.isMute = false;
         this.volumeOld = value;
+      }
       let volume = new Decimal(value).times(0.01).toFixed(2);
       if (this.instance) {
         this.instance.volume(volume, true);
@@ -149,7 +151,7 @@ export default {
     muteVolume() {
       if (this.isMute) {
         this.isMute = false;
-        this.volume = this.volumeOld > 0 ? parseInt(this.volumeOld) : 70;
+        this.volume = this.volumeOld >= 10 ? parseInt(this.volumeOld) : 70;
       } else {
         this.isMute = true;
         this.volumeOld = parseInt(this.volume);
@@ -301,6 +303,7 @@ export default {
       width: 8rem;
       height: 8rem;
       border-radius: 50%;
+      overflow: hidden;
     }
   }
 
@@ -379,7 +382,7 @@ export default {
         background-color: var(--bg-dark-primary);
 
         &:hover {
-          background-color: var(--bg-dark-hover-primary);
+          background-color: var(--bg-dark-primary);
         }
 
         &.is-plain {
