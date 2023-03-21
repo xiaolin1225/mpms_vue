@@ -18,6 +18,14 @@ export const requestFolderInfo = (params) => {
     });
 }
 
+/*获取文件数据*/
+export const requestFileInfo = (id) => {
+    return request({
+        url: `/file/detail/${id}`,
+        method: "get",
+    });
+}
+
 /*获取文件元数据*/
 export const requestFileMeta = (params) => {
     return request({
@@ -76,8 +84,5 @@ export const deleteFiles = (data) => {
         url: `/file`,
         method: "delete",
         data,
-        headers: {
-            'Content-Type': 'application/json'
-        }
     });
 }
