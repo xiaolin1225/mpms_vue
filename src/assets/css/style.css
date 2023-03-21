@@ -43,17 +43,17 @@ input {
   --body-background-color: #f8fafc;
   --panel-background-color: #ffffff;
   --panel-border-color: #e9eef5;
-  --panel-border-primary-color: #0054FE;
-  --item-primary-background-color: #0054FE;
+  --panel-border-primary-color: #409EFF;
+  --item-primary-background-color: #409EFF;
   --item-primary-hover-background-color: rgba(58, 132, 255, 0.2);
-  --text-primary-color: #0054FE;
+  --text-primary-color: #409EFF;
   --text-default-color: #1e293b;
   --text-light-color: #64748b;
   --text-white: #ffffff;
   --bg-light: #F8F9FB;
   --bg-light-primary: #ecf5ff;
-  --bg-dark-primary: #0054FE;
-  --bg-dark-hover-primary: #4582ff;
+  --bg-dark-primary: #409EFF;
+  --bg-dark-light-primary: #bee2ff;
   --bg-dark-gray: #CACACA;
   /*全局属性变量定义*/
   --shadow: 0 1px 1px 0 #302E150F;
@@ -112,6 +112,38 @@ body.submenu-open .page-container .main-container {
 }
 .el-descriptions-item__label {
   white-space: nowrap;
+}
+.pop-menu-container {
+  position: absolute;
+  top: 200px;
+  left: 200px;
+  background-color: var(--panel-background-color);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.5s cubic-bezier(0.4, 0, 1, 1);
+  overflow: hidden;
+}
+.pop-menu-container .pop-menu-list {
+  padding: var(--padding-y) 0;
+}
+.pop-menu-container .pop-menu-list .pop-menu-item {
+  height: 30px;
+  line-height: 30px;
+  min-width: 130px;
+  font-size: 12px;
+  color: var(--text-default-color);
+  padding: 0 var(--padding-x);
+  cursor: pointer;
+}
+.pop-menu-container .pop-menu-list .pop-menu-item i {
+  margin-right: 8px;
+}
+.pop-menu-container .pop-menu-list .pop-menu-item:hover {
+  background-color: var(--bg-light-primary);
+}
+.pop-menu-container .pop-menu-list .pop-menu-item-separate {
+  height: 1px;
+  background-color: var(--panel-border-color);
 }
 .emphasize {
   color: var(--text-primary-color);
