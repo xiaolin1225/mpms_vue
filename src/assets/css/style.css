@@ -145,6 +145,13 @@ body.submenu-open .page-container .main-container {
   height: 1px;
   background-color: var(--panel-border-color);
 }
+.content-opt-popover {
+  border-radius: 30px;
+  margin-left: 1.5rem !important;
+  box-shadow: var(--shadow);
+  padding: 0.5rem;
+  min-width: calc(0.5rem + 32px);
+}
 .emphasize {
   color: var(--text-primary-color);
   font-weight: 600;
