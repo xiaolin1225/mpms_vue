@@ -8,20 +8,30 @@
         <div class="left-wrap">
           <div class="card content-list">
             <div class="content-item" :class="currentIndex===index?'active':''" v-for="(item,index) in form"
-                 :key="item.id" @click="currentIndex = index">
-              <div class="content-info">
-                <BaseImage :src="item.thumb" class="content-thumb"
-                           v-if="item.thumb&&item.thumb.trim().length>0" fit="cover"/>
-                <div class="content-title">
-                  {{ item.title.length > 0 ? item.title : "标题" }}
+                 :key="item.id" @click="currentIndex = index" :title="item.title.length > 0 ? item.title : '标题'">
+              <el-popover
+                  placement="right"
+                  trigger="hover"
+                  :visible-arrow="false"
+                  popper-class="content-opt-popover"
+              >
+                <div class="content-info" slot="reference">
+                  <div class="content-title">
+                    {{ item.title.length > 0 ? item.title : "标题" }}
+                  </div>
+                  <div class="content-thumb"
+                       :style="item.thumb&&item.thumb.trim().length>0?`background-image:url(${item.thumb})`:''">
+                    <!--                  <BaseImage :src="item.thumb"-->
+                    <!--                             v-if="item.thumb&&item.thumb.trim().length>0" fit="cover"/>-->
+                  </div>
                 </div>
-              </div>
-              <div class="content-opt card">
-                <div class="opt-item" v-if="index===0">
+                <div class="content-opt">
                   <el-dropdown placement="bottom-start">
-                    <span class="el-dropdown-link">
-                      <i class="el-icon-sort"/>
-                    </span>
+                    <div class="el-dropdown-link">
+                      <div class="opt-item" v-if="index===0">
+                        <i class="el-icon-sort"/>
+                      </div>
+                    </div>
                     <el-dropdown-menu slot="dropdown">
                       <el-dropdown-item>
                         <el-popconfirm
@@ -74,17 +84,19 @@
                       </el-dropdown-item>
                     </el-dropdown-menu>
                   </el-dropdown>
+                  <div class="opt-item" v-if="form.length>1&&index>0" @click="handleContent('up',index)">
+                    <i class="el-icon-top"/>
+                  </div>
+                  <div class="opt-item" v-if="form.length>1&&index<form.length-1"
+                       @click="handleContent('down',index)">
+                    <i class="el-icon-bottom"/>
+                  </div>
+                  <div class="opt-item" v-if="index!==0" @click="handleContent('delete',index)">
+                    <i class="el-icon-delete"/>
+                  </div>
                 </div>
-                <div class="opt-item" v-if="form.length>1&&index>0">
-                  <i class="el-icon-top"/>
-                </div>
-                <div class="opt-item" v-if="form.length>1&&index<form.length-1">
-                  <i class="el-icon-bottom"/>
-                </div>
-                <div class="opt-item" v-if="index!==0">
-                  <i class="el-icon-delete"/>
-                </div>
-              </div>
+              </el-popover>
+
             </div>
             <div class="content-item add-content-item" v-if="form.length<8">
               <el-dropdown placement="bottom" @command="handleCreateContent">
@@ -109,12 +121,15 @@
           <div class="card">
 
             <el-form-item label="标题">
-              <el-input v-model="currentFormData.title" maxlength="64" show-word-limit/>
+              <el-input v-model="currentFormData.title" maxlength="64" show-word-limit placeholder="请在这里输入标题"/>
             </el-form-item>
             <el-form-item label="作者">
-              <el-input v-model="currentFormData.author" maxlength="8" show-word-limit/>
+              <el-input v-model="currentFormData.author" maxlength="8" show-word-limit placeholder="请输入作者"/>
             </el-form-item>
             <el-form-item label="内容">
+              <div id="editor-toolbar">
+
+              </div>
               <Editor
                   ref="editor"
                   v-model="currentFormData.content"
@@ -123,7 +138,20 @@
                   @onInit="editorInit"
               />
             </el-form-item>
-
+            <div class="toolbar">
+              <BaseBar>
+                <template #left>
+                  正文字数：{{ contentWordsCount }}
+                </template>
+                <template #right>
+                  <el-row>
+                    <el-button type="success">存为草稿</el-button>
+                    <el-button>预览</el-button>
+                    <el-button type="primary">发布</el-button>
+                  </el-row>
+                </template>
+              </BaseBar>
+            </div>
           </div>
         </div>
         <div class="right-wrap">
@@ -142,7 +170,9 @@
               </DragUpload>
             </el-form-item>
             <el-form-item label="摘要">
-              <el-input v-model="currentFormData.summary" type="textarea" :max="120" show-word-limit/>
+              <el-input v-model="currentFormData.summary" type="textarea" :max="120" :rows="3"
+                        placeholder="选填，摘要会在订阅号消息、转发链接等文章外的场景显露，帮助读者快速了解内容，如不填写则默认抓取正文前54字"
+                        show-word-limit/>
             </el-form-item>
             <el-form-item>
               <el-switch
@@ -150,14 +180,38 @@
                   active-color="#13ce66"
                   inactive-color="#ff4949"
               />
-              &nbsp;{{ form.original ? "已声明原创" : "未声明原创" }}
+              &nbsp;{{ currentFormData.original ? "已声明原创" : "未声明原创" }}
             </el-form-item>
-            <el-checkbox style="display: block;margin: var(--margin-y) 0" v-model="currentFormData.sourceActive">原文链接
-            </el-checkbox>
-            <el-checkbox style="display: block;margin: var(--margin-y) 0" v-model="currentFormData.commit">允许评论
-            </el-checkbox>
-            <el-checkbox style="display: block;margin: var(--margin-y) 0" v-model="currentFormData.collection">合集
-            </el-checkbox>
+            <el-form-item>
+              <el-checkbox v-model="currentFormData.sourceEnable">
+                原文链接&nbsp;
+                <el-input v-model="currentFormData.source" size="mini" placeholder="在此输入原文链接"
+                          :disabled="!currentFormData.sourceEnable"/>
+              </el-checkbox>
+            </el-form-item>
+            <el-form-item>
+              <el-checkbox v-model="currentFormData.commit">允许评论
+              </el-checkbox>
+            </el-form-item>
+            <el-form-item>
+              <el-checkbox v-model="currentFormData.collectionEnable">合集&nbsp;
+                <el-select
+                    size="mini"
+                    clearable
+                    :disabled="!currentFormData.collectionEnable"
+                    v-model="currentFormData.collection"
+                    filterable
+                    allow-create
+                    placeholder="请选择合集">
+                  <el-option
+                      v-for="item in collection"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value">
+                  </el-option>
+                </el-select>
+              </el-checkbox>
+            </el-form-item>
             <el-form-item label="发布时间">
               <el-date-picker
                   style="width: 100%"
@@ -174,20 +228,6 @@
         </div>
       </div>
     </el-form>
-    <div class="card mt">
-      <BaseBar>
-        <template #left>
-          正文字数：{{ contentWordsCount }}
-        </template>
-        <template #right>
-          <el-row>
-            <el-button type="success">存为草稿</el-button>
-            <el-button>预览</el-button>
-            <el-button type="primary">发布</el-button>
-          </el-row>
-        </template>
-      </BaseBar>
-    </div>
   </div>
 </template>
 
@@ -203,20 +243,21 @@ export default {
   data() {
     return {
       currentIndex: 0,
-      form: [{
-        id: 1,
-        title: "第一篇图文",
+      initialFormItem: () => ({
+        title: "",
         author: "",
         summary: "",
         content: "",
         source: "",
         thumb: "",
+        collection: "",
         postTime: null,
         original: false,
-        sourceActive: false,
+        sourceEnable: false,
         commit: false,
-        collection: false
-      }],
+        collectionEnable: false
+      }),
+      form: [],
       pickerOptions: {
         disabledDate: (date) => {
           let nowDate = new Date();
@@ -228,9 +269,11 @@ export default {
       init: {
         language: "zh-Hans",
         language_url: "/plugin/tinymce/zh-Hans.js",
-        plugins: 'autoresize lists link image table code help wordcount',
+        skin: "xiaolin-editor",
+        skin_url: "/plugin/tinymce/skins/ui/xiaolin-editor/",
+        plugins: 'autoresize lists link image table code help wordcount quickbars',
         placeholder: "从这里开始写正文",
-        min_height: 350, //编辑器高度
+        min_height: 300, //编辑器高度
         resize: false,
         browser_spellcheck: true, // 拼写检查
         elementpath: false, //禁用编辑器底部的状态栏
@@ -240,11 +283,13 @@ export default {
         branding: false, //是否禁用“Powered by TinyMCE”
         toolbar: "undo redo | fontselect fontsizeselect | alignleft aligncenter alignright alignjustify | lineheight forecolor backcolor bold italic underline strikethrough | h1 h2 h3 h4 h5 h6 | link image quicklinkblockquote table numlist bullist code preview fullscreen", //工具栏
         toolbar_mode: "wrap",
+        quickbars_selection_toolbar: "undo redo | fontselect fontsizeselect | alignleft aligncenter alignright alignjustify | lineheight forecolor backcolor bold italic underline strikethrough | h1 h2 h3 h4 h5 h6 | link image quicklinkblockquote table numlist bullist code preview fullscreen",
         fontsize_formats: "12px 14px 16px 18px 24px 36px 48px 56px 72px",
         font_formats: "微软雅黑=Microsoft YaHei,Helvetica Neue,PingFang SC,sans-serif;苹果苹方=PingFang SC,Microsoft YaHei,sans-serif;宋体=simsun,serif;仿宋体=FangSong,serif;黑体=SimHei,sans-serif;Arial=arial,helvetica,sans-serif;Arial Black=arial black,avant garde;Book Antiqua=book antiqua,palatino;",
       },
       editor: null,
-      contentWordsCount: 0
+      contentWordsCount: 0,
+      collection: []
     }
   },
   computed: {
@@ -253,7 +298,9 @@ export default {
     }
   },
   mounted() {
-
+    let initialData = this.initialFormItem();
+    initialData.id = 1;
+    this.form.push(initialData);
   },
   methods: {
     getTimeSelectableRange(time) {
@@ -290,46 +337,63 @@ export default {
       this.form[this.currentIndex].thumb = res.data;
     },
     handleCreateContent(command) {
-      const data = {
-        id: this.form.length + 1,
-        title: "",
-        author: "",
-        summary: "",
-        content: "",
-        source: "",
-        thumb: "",
-        postTime: null,
-        original: false,
-        sourceActive: false,
-        commit: false,
-        collection: false
-      }
+      let initialData = this.initialFormItem();
+      initialData.id = this.form.length + 1;
       switch (command) {
         case "create":
-          this.form.push(data);
+          this.form.push(initialData);
           break;
         default:
           console.log(command);
       }
     },
-    handleContent(command) {
-      const data = {
-        id: 1,
-        title: "",
-        author: "",
-        summary: "",
-        content: "",
-        source: "",
-        thumb: "",
-        postTime: null,
-        original: false,
-        sourceActive: false,
-        commit: false,
-        collection: false
-      }
+    handleContent(command, index) {
+      let initialData = this.initialFormItem();
+      initialData.id = 1;
+      let temp = this.form[index];
       switch (command) {
         case "create":
-          this.form[0] = data;
+          this.$set(this.form, 0, initialData);
+          break;
+        case "delete":
+          this.$confirm('此操作将永久删除该内容, 是否继续?', '警告', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            if (this.currentIndex === index) {
+              this.currentIndex = index - 1;
+            }
+            this.form.splice(index, 1);
+            this.$message({
+              type: 'success',
+              message: '删除成功!'
+            });
+          });
+          break;
+        case "up":
+          if (index === 0) {
+            this.$message({
+              type: 'warning',
+              message: '已经是第一条了!'
+            });
+            return;
+          }
+          this.$set(this.form, index, this.form[index - 1]);
+          this.$set(this.form, index - 1, temp);
+          this.currentIndex = index - 1;
+          break;
+        case "down":
+          if (index === this.form.length - 1) {
+            this.$message({
+              type: 'warning',
+              message: '已经是最后一条了!'
+            });
+            return;
+          }
+          this.$set(this.form, index, this.form[index + 1]);
+          this.$set(this.form, index + 1, temp);
+          this.currentIndex = index + 1;
           break;
         default:
           console.log(command);
@@ -340,6 +404,11 @@ export default {
 </script>
 
 <style lang="less" scoped>
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 .editor-container {
   position: relative;
   display: flex;
@@ -347,15 +416,11 @@ export default {
   justify-content: space-between;
   gap: var(--margin-x);
 
-  & > *::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-  }
-
   .left-wrap {
     width: 370px;
     min-width: 370px;
-    max-height: calc(100vh - 21rem);
+    position: sticky;
+    top: calc(var(--back-header-height) + var(--margin-y));
     overflow: auto;
 
     .content-list {
@@ -363,92 +428,83 @@ export default {
       user-select: none;
 
       .content-item {
+        width: 100%;
+        height: 72px;
         cursor: pointer;
         position: relative;
-        height: 130px;
-        border-radius: .5rem;
         margin-top: var(--margin-y);
 
-        &:first-child {
-          margin-top: unset;
-        }
-
-
         .content-info {
+          position: relative;
           width: 100%;
           height: 100%;
+          border: 2px solid var(--panel-border-color);
           border-radius: .5rem;
           overflow: hidden;
-          border: 2px solid var(--panel-border-color);
-          background-color: #E1E1E1;
-
-
-          &::before {
-            border-radius: .5rem;
-            overflow: hidden;
-            content: " ";
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 55px;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0);
-            background-image: linear-gradient(-180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.15) 86%);
-          }
-
-          .content-thumb {
-            width: 100%;
-            height: 100%;
-            //overflow: hidden;
-          }
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: .5rem;
 
           .content-title {
-            position: absolute;
-            left: 15px;
-            right: 15px;
-            bottom: 15px;
+            flex-grow: 1;
             overflow: hidden;
             text-overflow: ellipsis;
             display: -webkit-box;
             -webkit-box-orient: vertical;
             -webkit-line-clamp: 2;
-            color: #FFFFFF;
             font-weight: 400;
-            z-index: 1;
+          }
+
+          .content-thumb {
+            width: 48px;
+            min-width: 48px;
+            height: 48px;
+            min-height: 48px;
+            background-color: #E1E1E1;
+            border-radius: .5rem;
+            overflow: hidden;
+            background-position: center;
+            background-size: cover;
+          }
+
+          &:hover ~ .content-opt {
+            opacity: 1;
           }
         }
 
-        .content-opt {
-          cursor: default;
-          position: absolute;
-          top: 0;
-          right: -75px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          padding: .5rem;
-          border-radius: 24px;
-          //opacity: 0;
-          transition: opacity .5s cubic-bezier(.4, 0, 1, 1);
 
-          .opt-item {
-            cursor: pointer;
-            width: 2rem;
-            height: 2rem;
-            font-size: 1rem;
-            margin-top: .5rem;
-            padding: .5rem;
-            line-height: 1rem;
-            text-align: center;
-            border-radius: 50%;
+        &:first-child {
+          margin-top: unset;
+          height: 130px;
 
-            &:first-child {
-              margin-top: unset;
+          .content-info {
+            padding: unset;
+            border-color: #E1E1E1;
+
+            .content-title {
+              position: absolute;
+              left: 15px;
+              right: 15px;
+              bottom: 15px;
+              color: #ffffff;
             }
 
-            &:hover {
-              background-color: var(--bg-dark-gray);
+            .content-thumb {
+              width: 100%;
+              height: 100%;
+              border-radius: unset;
+            }
+
+            &::before {
+              content: " ";
+              position: absolute;
+              left: 0;
+              right: 0;
+              top: 55px;
+              bottom: 0;
+              background-color: rgba(0, 0, 0, 0);
+              background-image: linear-gradient(-180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.15) 86%);
             }
           }
         }
@@ -456,13 +512,6 @@ export default {
         &.active .content-info {
           border-color: var(--panel-border-primary-color);
         }
-
-        &:hover {
-          .content-opt {
-            opacity: 1;
-          }
-        }
-
       }
 
       .add-content-item {
@@ -488,16 +537,37 @@ export default {
   .center-wrap {
     width: 768px;
     min-width: 375px;
-    min-height: 350px;
-    max-height: calc(100vh - 21rem);
-    overflow: auto;
 
-    :deep(.tox-tinymce) {
-      border: 1px solid #DCDFE6;
-      transition: border-color .2s cubic-bezier(.645, .045, .355, 1);
+    .card {
+      position: relative;
+      min-height: 350px;
+      max-height: calc(100vh - 15rem);
+      overflow: auto;
+      padding-bottom: unset;
 
-      &:hover {
-        border-color: #C0C4CC;
+      :deep(.tox-tinymce) {
+        border: 1px solid #DCDFE6;
+        transition: border-color .2s cubic-bezier(.645, .045, .355, 1);
+
+        .tox-edit-area {
+          cursor: text;
+        }
+
+        &:hover {
+          border-color: #C0C4CC;
+        }
+      }
+
+      .toolbar {
+        margin: var(--margin-y) -1rem -1rem;
+        position: sticky;
+        bottom: 0;
+        padding: var(--margin-y) var(--margin-x);
+        background-color: #ffffff;
+        border-top: 1px solid var(--panel-border-color);
+        border-radius: 0 0 .5rem .5rem;
+        overflow: hidden;
+        z-index: 999;
       }
     }
   }
@@ -506,8 +576,46 @@ export default {
     flex-grow: 1;
     min-width: 300px;
     max-width: 420px;
-    max-height: calc(100vh - 21rem);
+    position: sticky;
+    top: calc(var(--back-header-height) + var(--margin-y));
+    max-height: calc(100vh - 15rem);
     overflow: auto;
   }
 }
+
+.content-opt {
+  cursor: default;
+  //position: absolute;
+  //top: 0;
+  //right: -75px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  //padding: .5rem;
+  border-radius: 24px;
+  //opacity: 1;
+  //transition: opacity .5s cubic-bezier(.4, 0, 1, 1);
+
+  .opt-item {
+    cursor: pointer;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+    margin-top: .5rem;
+    padding: .5rem;
+    line-height: 1rem;
+    text-align: center;
+    border-radius: 50%;
+
+    &:first-child {
+      margin-top: unset;
+    }
+
+    &:hover {
+      background-color: var(--bg-dark-gray);
+    }
+  }
+}
+
 </style>
