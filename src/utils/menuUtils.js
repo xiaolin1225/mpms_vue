@@ -1,6 +1,7 @@
 import router from "@/router";
 
 const componentList = {
+    LoginView: () => import("@/views/User/LoginView"),
     BackLayout: () => import("@/Layout/BackLayout"),
     BaseLayout: () => import("@/Layout/BaseLayout"),
     HomeView: () => import("@/views/HomeView"),
@@ -8,6 +9,7 @@ const componentList = {
     MediaList: () => import("@/views/Media/MediaList"),
     UserList: () => import("@/views/User/UserList"),
     ContentEditor: () => import("@/views/Content/ContentEditor"),
+    FileSelect: () => import("@/components/FileSelect")
 }
 
 export const setRouterList = (list) => {
