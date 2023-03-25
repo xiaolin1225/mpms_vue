@@ -33,6 +33,8 @@ export default {
     border-radius: .5rem;
     display: flex;
     align-items: center;
+    justify-content: center;
+    background: var(--bg-dark-gray);
     overflow: hidden;
   }
 
