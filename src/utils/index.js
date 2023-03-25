@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import {v4 as uuid} from 'uuid';
 
 export const timeFix = () => {
     const time = new Date()
@@ -128,4 +129,8 @@ export const createPopMenu = (x, y, list) => {
     container.style.top = y + "px";
     container.style.left = x + "px";
     container.style.zIndex = "9999";
+}
+
+export const createUUID = () => {
+    return uuid().replace(/-/g, '');
 }
