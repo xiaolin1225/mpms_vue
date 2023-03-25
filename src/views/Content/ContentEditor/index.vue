@@ -8,7 +8,8 @@
         <div class="left-wrap">
           <div class="card content-list">
             <div class="content-item" :class="currentIndex===index?'active':''" v-for="(item,index) in form"
-                 :key="item.id" @click="currentIndex = index" :title="item.title.length > 0 ? item.title : '标题'">
+                 :key="item.contentIndex" @click="currentIndex = index"
+                 :title="item.title.length > 0 ? item.title : '标题'">
               <el-popover
                   placement="right"
                   trigger="hover"
@@ -145,7 +146,7 @@
                 </template>
                 <template #right>
                   <el-row>
-                    <el-button type="success">存为草稿</el-button>
+                    <el-button type="success" @click="save">存为草稿</el-button>
                     <el-button>预览</el-button>
                     <el-button type="primary">发布</el-button>
                   </el-row>
@@ -157,17 +158,27 @@
         <div class="right-wrap">
           <div class="card">
             <el-form-item label="封面">
-              <DragUpload @success="handleThumbUploadSuccess">
-                <template #content>
-                  <BaseImage :src="currentFormData.thumb"
-                             v-if="currentFormData.thumb&&currentFormData.thumb.trim().length>0"/>
-                  <div v-else>
-                    <i class="el-icon-upload"></i>
-                    <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-                  </div>
-                </template>
-                <template #tip>只能上传不超过300MB的文件</template>
-              </DragUpload>
+              <div class="thumb-container" :style="`background-image:url(${currentFormData.thumb});`"
+                   @click="fileSelectDialogVisible = true">
+                <div class="tip" v-if="!currentFormData.thumb">
+                  <i class="el-icon-plus"></i>
+                  <p>选择封面</p>
+                </div>
+              </div>
+              <el-dialog
+                  title="选择封面"
+                  :visible.sync="fileSelectDialogVisible"
+                  width="60%"
+                  center
+                  style="z-index: 2"
+                  append-to-body
+              >
+                <FileSelect v-model="selectFile" type="image"/>
+                <span slot="footer" class="dialog-footer">
+                  <el-button @click="fileSelectDialogVisible = false">取 消</el-button>
+                  <el-button type="primary" @click="setThumb" :disabled="selectFile.length===0">确 定</el-button>
+                </span>
+              </el-dialog>
             </el-form-item>
             <el-form-item label="摘要">
               <el-input v-model="currentFormData.summary" type="textarea" :max="120" :rows="3"
@@ -215,7 +226,7 @@
             <el-form-item label="发布时间">
               <el-date-picker
                   style="width: 100%"
-                  v-model="currentFormData.postTime"
+                  v-model="postTime"
                   :picker-options="pickerOptions"
                   :default-time="getDefaultTime()"
                   type="datetime"
@@ -236,14 +247,19 @@ import Editor from '@tinymce/tinymce-vue'
 import BaseImage from "@/components/BaseImage/index.vue";
 import BaseBar from "@/components/BaseBar/index.vue";
 import DragUpload from "@/components/DragUpload/index.vue";
+import {getContent, saveContent} from "@/api/content";
+import {createUUID} from "@/utils";
+import FileSelect from "@/components/FileSelect/index.vue";
+import fileSelect from "@/components/FileSelect/index.vue";
 
 export default {
   name: "ContentEditor",
-  components: {DragUpload, BaseBar, BaseImage, Editor},
+  components: {FileSelect, DragUpload, BaseBar, BaseImage, Editor},
   data() {
     return {
       currentIndex: 0,
       initialFormItem: () => ({
+        subId: createUUID(),
         title: "",
         author: "",
         summary: "",
@@ -251,12 +267,12 @@ export default {
         source: "",
         thumb: "",
         collection: "",
-        postTime: null,
         original: false,
         sourceEnable: false,
         commit: false,
         collectionEnable: false
       }),
+      postTime: null,
       form: [],
       pickerOptions: {
         disabledDate: (date) => {
@@ -289,18 +305,35 @@ export default {
       },
       editor: null,
       contentWordsCount: 0,
-      collection: []
+      collection: [],
+      contentId: null,
+      fileSelectDialogVisible: false,
+      selectFile: []
     }
   },
   computed: {
+    fileSelect() {
+      return fileSelect
+    },
     currentFormData() {
       return this.form[this.currentIndex];
     }
   },
   mounted() {
-    let initialData = this.initialFormItem();
-    initialData.id = 1;
-    this.form.push(initialData);
+    let contentId = this.$route.query.contentId;
+    if (contentId) {
+      this.contentId = contentId;
+      getContent(contentId).then(res => {
+        let data = res.data;
+        data.sort((a, b) => a.contentIndex - b.contentIndex);
+        this.form = data;
+        this.postTime = data[0].postTime;
+      });
+    } else {
+      let initialData = this.initialFormItem();
+      initialData.contentIndex = 1;
+      this.form.push(initialData);
+    }
   },
   methods: {
     getTimeSelectableRange(time) {
@@ -317,7 +350,7 @@ export default {
       let nowDate = new Date();
       nowDate.setMinutes(nowDate.getMinutes() + 5);
       if (nowDate.getDate() - 1 >= time.getDate() || nowDate.getDate() === time.getDate() && (nowDate.getHours() < nowDate.getHours() || (nowDate.getHours() === nowDate.getHours() && nowDate.getMinutes() > time.getMinutes()))) {
-        this.form.postTime = nowDate;
+        this.postTime = nowDate;
       }
       this.pickerOptions.selectableRange = this.getTimeSelectableRange(time);
     },
@@ -338,7 +371,7 @@ export default {
     },
     handleCreateContent(command) {
       let initialData = this.initialFormItem();
-      initialData.id = this.form.length + 1;
+      initialData.contentIndex = this.form.length + 1;
       switch (command) {
         case "create":
           this.form.push(initialData);
@@ -349,7 +382,7 @@ export default {
     },
     handleContent(command, index) {
       let initialData = this.initialFormItem();
-      initialData.id = 1;
+      initialData.contentIndex = 1;
       let temp = this.form[index];
       switch (command) {
         case "create":
@@ -399,6 +432,29 @@ export default {
           console.log(command);
       }
     },
+    save() {
+      for (let i = 0; i < this.form.length; i++) {
+        const item = this.form[i];
+        item.title = item.title.trim();
+        if (item.title.length === 0) {
+          this.$message({
+            type: 'warning',
+            message: '标题不能为空!'
+          });
+          this.currentIndex = i;
+          return;
+        }
+        item.postTime = this.postTime;
+      }
+      saveContent(this.contentId, this.form).then(res => {
+        this.$message.success(res.message);
+        this.contentId = res.data;
+      })
+    },
+    setThumb() {
+      this.currentFormData.thumb = this.selectFile[0].url;
+      this.fileSelectDialogVisible = false;
+    }
   }
 }
 </script>
@@ -415,6 +471,11 @@ export default {
   align-items: start;
   justify-content: space-between;
   gap: var(--margin-x);
+
+  .card {
+    max-height: calc(100vh - 15rem);
+    overflow: auto;
+  }
 
   .left-wrap {
     width: 370px;
@@ -541,8 +602,6 @@ export default {
     .card {
       position: relative;
       min-height: 350px;
-      max-height: calc(100vh - 15rem);
-      overflow: auto;
       padding-bottom: unset;
 
       :deep(.tox-tinymce) {
@@ -578,8 +637,42 @@ export default {
     max-width: 420px;
     position: sticky;
     top: calc(var(--back-header-height) + var(--margin-y));
-    max-height: calc(100vh - 15rem);
-    overflow: auto;
+    //max-height: calc(100vh - 15rem);
+    //overflow: auto;
+
+    .card {
+      .thumb-container {
+        margin: 0 auto;
+        cursor: pointer;
+        display: block;
+        width: 211.5px;
+        height: 90px;
+        box-sizing: border-box;
+        border: 2px dashed var(--panel-border-color);
+        text-align: center;
+        padding-top: 12px;
+        transition: all 0.1s;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+
+        .tip {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--text-light-color);
+        }
+
+        &:hover {
+          border-color: var(--panel-border-hover-color);
+        }
+      }
+    }
   }
 }
 
