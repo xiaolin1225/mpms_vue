@@ -4,9 +4,9 @@
     <div class="login-box">
       <div class="brand-container">
         <div class="brand">
-          <BaseImage class="brand-image" :src="require('@/assets/logo.png')" fit="contain"/>
+          <BaseImage class="brand-image" :src="brand" fit="contain"/>
         </div>
-        <div class="title">融媒体平台管理系统</div>
+        <div class="title">{{ webTitle }}</div>
       </div>
       <div class="login-form-container">
         <div class="login-form-header">
@@ -55,6 +55,7 @@
 import BaseImage from "@/components/BaseImage/index.vue";
 import {isCodeCorrect, isUserExist, login} from "@/api/user";
 import {callback} from "chart.js/helpers";
+import {mapState} from "vuex";
 
 export default {
   name: "LoginView",
@@ -98,6 +99,7 @@ export default {
       codeUrl: ""
     }
   },
+  computed: {...mapState("system", ["brand", "webTitle"])},
   methods: {
     updateCode() {
       this.codeUrl = this.baseCodeUrl + "?" + Math.random();
@@ -107,6 +109,9 @@ export default {
         if (valid) {
           login(this.form).then(res => {
             this.$message.success("登录成功");
+            let {code, message, data} = res;
+            console.log(code, message, data);
+            this.$router.push("/back/home");
           }).catch(error => {
             this.$message.error(error.message);
           }).finally(() => {
