@@ -2,6 +2,7 @@ import router from "@/router";
 
 const componentList = {
     LoginView: () => import("@/views/User/LoginView"),
+    RegisterView: () => import("@/views/User/RegisterView"),
     BackLayout: () => import("@/Layout/BackLayout"),
     BaseLayout: () => import("@/Layout/BaseLayout"),
     HomeView: () => import("@/views/HomeView"),
