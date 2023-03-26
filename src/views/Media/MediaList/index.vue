@@ -41,37 +41,41 @@
         </template>
       </BaseBar>
     </div>
-    <div class="media-card-list mt" id="mediaList" ref="mediaCardList">
-      <div class="media-item" :class="isChecked(item.id)?'is-checked':''" v-for="item in list" :key="item.id"
-           @click.right.prevent.stop="handleItemRightClick(item.id,$event)">
-        <div class="media-item-header">
-          <el-checkbox :value="isChecked(item.id)" @click.native.prevent="itemCheckToggle(item.id)"/>
-        </div>
-        <div @click="handleItemClick(item.id,item.isDir)">
-          <div class="media-thumb-wrap">
-            <div class="type-icon">
-              <SvgIcon :name="`type-${item.type.parent.name}`"/>
-            </div>
-            <BaseImage :src="item.thumb" fit="cover" @load="loadThumb" style="transform: scale(1.1);"/>
+    <div class="media-card-list-container">
+      <div class="media-card-list mt" id="mediaList" ref="mediaCardList">
+        <div class="media-item" :class="isChecked(item.id)?'is-checked':''" v-for="item in list" :key="item.id"
+             @click.right.prevent.stop="handleItemRightClick(item.id,$event)">
+          <div class="media-item-header">
+            <el-checkbox :value="isChecked(item.id)" @click.native.prevent="itemCheckToggle(item.id)"/>
           </div>
-          <el-popover
-              placement="bottom"
-              width="200"
-              trigger="hover"
-          >
-            <div>名称：<span>{{ item.title + (item.suffix ? "." + item.suffix : "") }}</span></div>
-            <div>大小：<span>{{ fileSizeByteToM(item.size, 2) }}</span></div>
-            <div>创建日期：<span>{{ item.createTime }}</span></div>
-            <div class="media-info-wrap" slot="reference">
-              <h2 class="title">
-                {{ item.title && item.title.length > 18 ? item.title.slice(0, 19) + "..." : item.title }}
-              </h2>
-              <h2 class="date">{{ item.createTime }}</h2>
+          <div @click="handleItemClick(item.id,item.isDir)">
+            <div class="media-thumb-wrap">
+              <div class="type-icon">
+                <SvgIcon :name="`type-${item.type.parent.name}`"/>
+              </div>
+              <BaseImage :src="item.thumb" fit="cover" @load="loadThumb" style="transform: scale(1.1);"/>
             </div>
-          </el-popover>
+            <el-popover
+                placement="bottom"
+                width="200"
+                trigger="hover"
+            >
+              <div>名称：<span>{{ item.title + (item.suffix ? "." + item.suffix : "") }}</span></div>
+              <div>大小：<span>{{ fileSizeByteToM(item.size, 2) }}</span></div>
+              <div>创建日期：<span>{{ item.createTime }}</span></div>
+              <div class="media-info-wrap" slot="reference">
+                <h2 class="title">
+                  {{ item.title && item.title.length > 18 ? item.title.slice(0, 19) + "..." : item.title }}
+                </h2>
+                <h2 class="date">{{ item.createTime }}</h2>
+              </div>
+            </el-popover>
+          </div>
         </div>
       </div>
     </div>
+    <BasePagination v-model="current" :page-num="pageNum" :total="total" :page-size="size"
+                    @size-change="handleSizeChange" class="mt card"/>
     <el-dialog
         title="上传文件"
         :visible.sync="uploadDialogOpen"
@@ -524,7 +528,12 @@ export default {
       if (this.instance) {
         this.instance.destroy();
       }
-    }
+    },
+    handleSizeChange(size) {
+      this.size = size;
+      this.current = 1;
+      this.getFileList(this.folder.id);
+    },
   },
   props: {},
   computed: {
@@ -538,6 +547,9 @@ export default {
         this.calculateColumn();
         this.loading = false;
       }
+    },
+    current() {
+      this.getFileList(this.folder.id);
     }
   },
   mounted() {
@@ -563,6 +575,11 @@ export default {
 }
 
 .container {
+  .media-card-list-container {
+    height: calc(100vh - var(--back-header-height) - var(--padding-y) - var(--margin-y) - 18rem);
+    overflow: auto;
+  }
+
   .media-card-list {
     position: relative;
 
