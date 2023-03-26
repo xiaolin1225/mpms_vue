@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import createPersistedState from "vuex-persistedstate";
+import system from "@/store/system";
 import user from "@/store/user";
 import menu from "@/store/menu";
 
@@ -12,6 +13,7 @@ export default new Vuex.Store({
     mutations: {},
     actions: {},
     modules: {
+        system,
         user,
         menu
     },
@@ -28,3 +30,12 @@ export default new Vuex.Store({
     ]
 
 })
+
+
+// export default {
+//     namespaced: true,
+//     state: {},
+//     getters: {},
+//     mutations: {},
+//     actions: {},
+// }
