@@ -19,7 +19,6 @@
         <el-table-column
             prop="id"
             label="序号"
-            type="index"
             align="center"
         />
         <el-table-column type="expand">
@@ -326,9 +325,13 @@ export default {
         type: 'danger'
       }).then(() => {
         let ids = this.checkList.map(item => item.id);
-        deleteUsers(JSON.stringify(ids)).then(() => {
+        deleteUsers(JSON.stringify(ids)).then(async () => {
           this.$message.success("删除成功");
-          this.getUserList();
+          await this.getUserList();
+          if (this.current > this.pageNum) {
+            this.current = this.pageNum;
+            await this.getUserList();
+          }
         })
       })
     },
@@ -371,7 +374,7 @@ export default {
     },
     handleAvatarSuccess(res) {
       this.$message.success("上传成功");
-      this.drawerData.avatar = res.data.url;
+      this.drawerData.avatar = res.data;
     },
     async handleAvatarBeforeUpload(file) {
       const isImage = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/gif';
