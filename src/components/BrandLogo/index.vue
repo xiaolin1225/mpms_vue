@@ -19,20 +19,21 @@ export default {
       type: String,
       require: true
     },
-    target_url:{
-      type:String,
-      default:"/"
+    target_url: {
+      type: String,
+      default: "/back/home"
     }
   }
 }
 </script>
 
 <style scoped>
-.logo{
+.logo {
   width: calc(var(--back-header-height) - var(--padding-y) - 1rem);
   height: calc(var(--back-header-height) - var(--padding-y) - 1rem);
   transition: transform .5s cubic-bezier(.4, 0, .2, 1);
 }
+
 .logo:hover {
   transform: rotate(360deg);
 }
