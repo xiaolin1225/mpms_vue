@@ -4,9 +4,9 @@
     <div class="register-box">
       <div class="brand-container">
         <div class="brand">
-          <BaseImage class="brand-image" :src="require('@/assets/logo.png')" fit="contain"/>
+          <BaseImage class="brand-image" :src="brand" fit="contain"/>
         </div>
-        <div class="title">融媒体平台管理系统</div>
+        <div class="title">{{ webTitle }}</div>
       </div>
       <div class="register-form-container">
         <div class="register-form-header">
@@ -53,6 +53,7 @@
 import BaseImage from "@/components/BaseImage/index.vue";
 import {isCodeCorrect, isUserExist, register} from "@/api/user";
 import {callback} from "chart.js/helpers";
+import {mapState} from "vuex";
 
 export default {
   name: "RegisterView",
@@ -94,6 +95,9 @@ export default {
       baseCodeUrl: process.env.VUE_APP_API_URL + "/register/code",
       codeUrl: ""
     }
+  },
+  computed: {
+    ...mapState("system", ["brand", "webTitle"])
   },
   methods: {
     updateCode() {
@@ -176,7 +180,7 @@ export default {
         font-weight: 600;
       }
     }
-    
+
     .register-form-container {
       width: 100%;
       max-width: 400px;
