@@ -1,5 +1,29 @@
 import request from "@/utils/request";
 
+export const isUserExist = (data) => {
+    return request({
+        url: "/user/exist",
+        method: "post",
+        data
+    })
+}
+
+export const isCodeCorrect = (type, data) => {
+    return request({
+        url: `/${type}/code/validation`,
+        method: "post",
+        data
+    })
+}
+
+export const login = (data) => {
+    return request({
+        url: "/login",
+        method: "post",
+        data
+    })
+}
+
 /*获取用户列表*/
 export const requestUserList = (params) => {
     return request({
