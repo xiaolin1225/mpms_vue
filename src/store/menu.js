@@ -1,5 +1,5 @@
 import {requestMenuList} from "@/api/menus";
-import {getMenuByPid, getTreeChildren, setRouterList} from "@/utils/menuUtils";
+import {getMenuByPid, getSubmenus, setRouterList} from "@/utils/menuUtils";
 
 export default {
     namespaced: true,
@@ -41,7 +41,7 @@ export default {
             })
         },
         setSubmenus({commit, state}, pid) {
-            commit("setSubMenu", getTreeChildren(state.menus, pid));
+            commit("setSubMenu", getSubmenus(state.menus, pid));
         }
     },
 }
