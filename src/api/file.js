@@ -9,6 +9,15 @@ export const requestFileList = (params) => {
     });
 }
 
+/*获取文件夹列表*/
+export const requestFolderList = (params) => {
+    return request({
+        url: `/file/folder/list`,
+        method: "get",
+        params
+    });
+}
+
 /*获取文件夹信息*/
 export const requestFolderInfo = (params) => {
     return request({
