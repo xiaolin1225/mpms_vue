@@ -12,6 +12,7 @@
         :on-success="handleUploadFileSuccess"
         :file-list="fileList"
     >
+      <slot name="default"></slot>
       <slot name="content"></slot>
       <div class="el-upload__tip" slot="tip">
         <slot name="tip"></slot>
