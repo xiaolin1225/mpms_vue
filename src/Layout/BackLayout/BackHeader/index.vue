@@ -2,9 +2,9 @@
   <div class="container">
     <div class="brand-container">
       <div class="logo-container">
-        <BrandLogo :img_url="require('@/assets/logo.png')"/>
+        <BrandLogo :img_url="brand"/>
       </div>
-      <div class="brand-title">后台管理系统</div>
+      <div class="brand-title">{{ webTitle }}</div>
     </div>
     <div class="header-content">
       <div class="left-wrap">
@@ -14,9 +14,9 @@
       </div>
       <div class="right-wrap">
         <div class="extends">
-<!--          <div class="extend-item">-->
-<!--            <i class="el-icon-full-screen"></i>-->
-<!--          </div>-->
+          <!--          <div class="extend-item">-->
+          <!--            <i class="el-icon-full-screen"></i>-->
+          <!--          </div>-->
         </div>
         <div class="user-info">
           <div class="user-avatar">
@@ -31,10 +31,14 @@
 
 <script>
 import BrandLogo from "@/components/BrandLogo/index.vue";
+import {mapState} from "vuex";
 
 export default {
   name: "BackHeader",
   components: {BrandLogo},
+  computed: {
+    ...mapState("system", ["brand", "webTitle"])
+  },
   methods: {
     handleSidebarToggle() {
       document.body.classList.toggle("submenu-open");
@@ -78,15 +82,17 @@ export default {
     }
   }
 
-  .header-content{
+  .header-content {
     flex-grow: 1;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    .left-wrap{
+
+    .left-wrap {
       display: flex;
       gap: var(--padding-x);
-      .sub-menu-toggle-btn{
+
+      .sub-menu-toggle-btn {
         font-size: 1.5rem;
         font-weight: 600;
         color: var(--text-light-color);
@@ -94,38 +100,42 @@ export default {
       }
     }
 
-    .right-wrap{
+    .right-wrap {
       display: flex;
       align-items: center;
       gap: var(--padding-x);
       //padding-right: var(--padding-x);
 
-      .extends{
+      .extends {
         display: flex;
         gap: var(--padding-x);
-        .extend-item{
+
+        .extend-item {
           font-size: 1.5rem;
           color: var(--text-light-color);
           cursor: pointer;
         }
       }
 
-      .user-info{
+      .user-info {
         display: flex;
         align-items: center;
-        .user-avatar{
+
+        .user-avatar {
           width: 40px;
           height: 40px;
           border-radius: 50%;
           overflow: hidden;
           margin-right: var(--padding-x);
-          img{
+
+          img {
             width: 100%;
             height: 100%;
             object-fit: cover;
           }
         }
-        .user-name{
+
+        .user-name {
           font-size: 1.2rem;
           color: var(--text-default-color);
         }
@@ -141,11 +151,13 @@ export default {
         display: none;
       }
     }
-    .user-info{
-      .user-avatar{
+
+    .user-info {
+      .user-avatar {
         margin-right: 0;
       }
-      .user-name{
+
+      .user-name {
         display: none;
       }
     }
