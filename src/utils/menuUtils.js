@@ -49,8 +49,13 @@ export const getTreeChildren = (list, pid) => {
 export const getMenuByPid = (list, pid = 2) => {
     const result = [];
     list.forEach(item => {
-        if (item.pid === pid)
+        if (item.pid === pid && item.isNav)
             result.push(item);
     });
     return result;
+}
+
+export const getSubmenus = (list, pid) => {
+    let filter = list.filter(item => item.isNav);
+    return getTreeChildren(filter, pid);
 }
