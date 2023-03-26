@@ -42,8 +42,12 @@ input {
   /* 全局颜色变量定义 */
   --body-background-color: #f8fafc;
   --panel-background-color: #ffffff;
+  --panel-background-color-80: rgba(255, 255, 255, 0.8);
+  --panel-background-color-60: rgba(255, 255, 255, 0.6);
   --panel-border-color: #e9eef5;
+  --panel-border-white-color: #ffffff;
   --panel-border-primary-color: #409EFF;
+  --panel-border-hover-color: #a1ceff;
   --item-primary-background-color: #409EFF;
   --item-primary-hover-background-color: rgba(58, 132, 255, 0.2);
   --text-primary-color: #409EFF;
@@ -52,9 +56,12 @@ input {
   --text-white: #ffffff;
   --bg-light: #F8F9FB;
   --bg-light-primary: #ecf5ff;
+  --bg-white: #ffffff;
   --bg-dark-primary: #409EFF;
+  --bg-dark-primary-gray: #4485f6;
   --bg-dark-light-primary: #bee2ff;
-  --bg-dark-gray: #CACACA;
+  --bg-dark-gray: #dcdbdb;
+  --bg-dark-gray-60: rgba(220, 219, 219, 0.6);
   /*全局属性变量定义*/
   --shadow: 0 1px 1px 0 #302E150F;
 }
