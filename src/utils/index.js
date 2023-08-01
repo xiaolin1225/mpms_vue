@@ -47,15 +47,34 @@ export const transPlayTimeToLyricsTime = time => {
     return minute + ":" + second;
 }
 
-export const debounce = (func, wait) => {
+export const debounce = (fun, wait) => {
     let timeout;
     return function () {
         let context = this;
         let args = arguments;
         if (timeout) clearTimeout(timeout);
         timeout = setTimeout(() => {
-            func.apply(context, args)
+            fun.apply(context, args)
         }, wait);
+    }
+}
+
+export const throttle = (fun, delay) => {
+    let last;
+    return function (args) {
+        let that = this;
+        let _args = args;
+        let now = +new Date();
+        if (last && last + delay > now) {
+            clearTimeout(fun.id);
+            fun.id = setTimeout(function () {
+                last = now;
+                fun.call(that, _args);
+            }, delay);
+        } else {
+            last = now;
+            fun.call(that, _args);
+        }
     }
 }
 
@@ -133,4 +152,20 @@ export const createPopMenu = (x, y, list) => {
 
 export const createUUID = () => {
     return uuid().replace(/-/g, '');
+}
+
+export const deepClone = (obj) => {
+    let result = typeof obj.splice === "function" ? [] : {};
+    if (obj && typeof obj === 'object') {
+        for (let key in obj) {
+            if (obj[key] && typeof obj[key] === 'object') {
+                result[key] = deepClone(obj[key]);//如果对象的属性值为object的时候，递归调用deepClone,即在吧某个值对象复制一份到新的对象的对应值中。
+            } else {
+                result[key] = obj[key];//如果对象的属性值不为object的时候，直接复制参数对象的每一个键值到新的对象对应的键值对中。
+            }
+
+        }
+        return result;
+    }
+    return obj;
 }

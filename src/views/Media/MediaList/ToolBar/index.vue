@@ -63,7 +63,7 @@
 
 <script>
 import BaseBar from "@/components/BaseBar/index.vue";
-import {requestFileType} from "@/api/file";
+import {requestFileType} from "@/api/media";
 
 let id = 0;
 export default {

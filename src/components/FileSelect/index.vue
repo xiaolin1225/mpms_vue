@@ -1,11 +1,5 @@
 <template>
   <div class="file-select-container">
-    <div class="folder-list">
-      <div class="folder-item" :class="item.id === currentFolder?'selected':''" v-for="item in folderList"
-           :key="item.id">
-        <span class="title">{{ item.title }}</span>
-      </div>
-    </div>
     <div class="file-list-container">
       <div class="toolbar">
         <BaseBar>
@@ -45,19 +39,18 @@
 </template>
 
 <script>
-import {requestFileList, requestFolderList} from "@/api/file";
+import {requestFileListPage, requestFolderList} from "@/api/media";
 import BaseBar from "@/components/BaseBar/index.vue";
 import DragUpload from "@/components/DragUpload/index.vue";
 import BasePagination from "@/components/BasePagination/index.vue";
+import {imageSrcHandler} from "@/utils/fileUtils";
 
 export default {
   name: "FileSelect",
   components: {BasePagination, DragUpload, BaseBar},
   data() {
     return {
-      currentFolder: -1,
       selectedList: [],
-      folderList: [],
       fileList: [],
       current: 1,
       pageNum: 0,
@@ -84,22 +77,13 @@ export default {
     }
   },
   methods: {
-    getFolderList() {
-      requestFolderList({current: this.folderCurrentPage, size: this.folderPageSize}).then(res => {
-        let {records, total, pages} = res.data;
-        this.folderList = records;
-        this.folderTotal = total;
-        this.folderPageNum = pages;
-        if (records[0]) {
-          this.currentFolder = records[0].id;
-          this.getFileList(this.currentFolder);
-        }
-      })
-    },
-    async getFileList(fid) {
-      let res = await requestFileList({fid, type: this.type, current: this.current, size: this.size});
+    async getFileList() {
+      let res = await requestFileListPage({current: this.current, size: this.size});
       let {records, total, pages} = res.data;
-      this.fileList = records;
+      this.fileList = records.map(item => {
+        item.thumb = imageSrcHandler(item.thumb);
+        return item;
+      });
       this.total = total;
       this.pageNum = pages;
     },
@@ -122,13 +106,13 @@ export default {
     handleSizeChange(size) {
       this.size = size;
       this.current = 1;
-      this.getFileList(this.currentFolder);
+      this.getFileList();
     },
     handleUploadSuccess(res) {
       console.log(res);
       this.current = 1;
       setTimeout(async () => {
-        await this.getFileList(this.currentFolder);
+        await this.getFileList();
         this.selectedList.push(this.fileList[0]);
         this.$message.success("上传成功");
       }, 1000);
@@ -141,11 +125,11 @@ export default {
       this.selectedList = value;
     },
     current() {
-      this.getFileList(this.currentFolder);
+      this.getFileList();
     }
   },
   mounted() {
-    this.getFolderList();
+    this.getFileList();
   }
 }
 </script>

@@ -1,15 +1,15 @@
 <template>
-  <router-view/>
+  <div style="width: 100%;height: 100%">
+    <router-view/>
+  </div>
 </template>
 <script>
-import {mapActions} from "vuex";
+
 
 export default {
-  methods: {
-    ...mapActions("menu", ["getMenus"])
-  },
+  methods: {},
   created() {
-    this.getMenus();
+    this.$store.dispatch("system/getSystemConfig");
   }
 }
 </script>

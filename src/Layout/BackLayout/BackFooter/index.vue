@@ -1,7 +1,7 @@
 <template>
-<div class="container">
-Copyright ©2023-现在 小林 All Rights Reserved.
-</div>
+  <div class="container">
+    Copyright ©2023-现在 小林 All Rights Reserved.
+  </div>
 </template>
 
 <script>
@@ -11,8 +11,9 @@ export default {
 </script>
 
 <style scoped>
-.container{
+.container {
   text-align: center;
   user-select: none;
+  margin: var(--margin-y) 0;
 }
 </style>

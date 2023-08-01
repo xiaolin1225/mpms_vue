@@ -11,19 +11,24 @@
 * ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
-  background-color: #f5f5f5;
+  background-color: rgba(204, 204, 204, 0.2);
 }
 * ::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
-  background-color: #f5f5f5;
+  background-color: transparent;
 }
 * ::-webkit-scrollbar-thumb {
   border-radius: 10px;
   box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
   background-color: #c8c8c8;
+}
+i.fa,
+i.fas {
+  margin-right: 5px;
+  width: 24px;
+  text-align: center;
+  font-size: 18px;
+  vertical-align: middle;
 }
 input {
   border: none;
@@ -52,16 +57,21 @@ input {
   --item-primary-hover-background-color: rgba(58, 132, 255, 0.2);
   --text-primary-color: #409EFF;
   --text-default-color: #1e293b;
+  --text-danger-color: #F56C6C;
   --text-light-color: #64748b;
+  --text-light-sub-color: #b1b2b3;
   --text-white: #ffffff;
   --bg-light: #F8F9FB;
   --bg-light-primary: #ecf5ff;
   --bg-white: #ffffff;
+  --bg-white-60: rgba(255, 255, 255, 0.6);
+  --bg-white-80: rgba(255, 255, 255, 0.8);
   --bg-dark-primary: #409EFF;
   --bg-dark-primary-gray: #4485f6;
   --bg-dark-light-primary: #bee2ff;
   --bg-dark-gray: #dcdbdb;
   --bg-dark-gray-60: rgba(220, 219, 219, 0.6);
+  --bg-dark-gray-20: rgba(220, 219, 219, 0.2);
   /*全局属性变量定义*/
   --shadow: 0 1px 1px 0 #302E150F;
 }
@@ -81,6 +91,9 @@ body.submenu-open .submenu-container {
 body.submenu-open .page-container .main-container {
   margin-left: calc(var(--back-sidebar-main-menu-width) + var(--back-sidebar-sub-menu-width));
 }
+body.submenu-open .profile-container .menu-list-container.fixed {
+  width: calc(100% - var(--back-sidebar-main-menu-width) - var(--back-sidebar-sub-menu-width));
+}
 .card {
   background-color: var(--panel-background-color);
   border-radius: 0.5rem;
@@ -88,13 +101,18 @@ body.submenu-open .page-container .main-container {
   box-shadow: var(--shadow);
   transition: box-shadow 0.5s cubic-bezier(0.4, 0, 1, 1);
 }
+.card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--margin-y);
+  padding: var(--padding-y) 0;
+  border-bottom: 1px solid var(--panel-border-color);
+}
 .card .card-title {
   font-size: 1rem;
   font-weight: 600;
-  margin-bottom: var(--margin-y);
-  padding: var(--padding-y) 0;
   color: var(--text-default-color);
-  border-bottom: 1px solid var(--panel-border-color);
 }
 .card .card-title > * {
   margin-bottom: 0.5rem;
@@ -159,8 +177,23 @@ body.submenu-open .page-container .main-container {
   padding: 0.5rem;
   min-width: calc(0.5rem + 32px);
 }
+.vue-treeselect__placeholder,
+.vue-treeselect__single-value {
+  top: 4px !important;
+}
+.vue-treeselect--has-value .vue-treeselect__input {
+  vertical-align: middle !important;
+}
+.el-form-item.is-error .vue-treeselect__control,
+.el-form-item.is-error .vue-treeselect__menu {
+  border-color: #F56C6C !important;
+}
 .emphasize {
   color: var(--text-primary-color);
+  font-weight: 600;
+}
+.emphasize-danger {
+  color: var(--text-danger-color);
   font-weight: 600;
 }
 .m {
@@ -239,6 +272,9 @@ body.submenu-open .page-container .main-container {
   }
   .submenu-container {
     transform: translateX(-100%);
+  }
+  body.submenu-open .el-table__fixed-right {
+    z-index: 0;
   }
   body.submenu-open .main-menu-container {
     transform: translate(0);

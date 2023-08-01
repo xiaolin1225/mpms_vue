@@ -1,5 +1,6 @@
 <template>
   <ul class="menu-list">
+    <MainMenuItem icon="el-icon-s-home" link="/" title="首页"/>
     <MainMenuItem v-for="(item,index) in list" :key="index" :id="item.id" :icon="item.icon" :link="item.path"
                   :title="item.title"/>
   </ul>

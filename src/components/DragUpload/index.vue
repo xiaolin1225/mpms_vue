@@ -5,8 +5,8 @@
         class="drag-upload-container"
         drag
         action="api/file/upload"
-        multiple
-        :data="uploadFileData"
+        :multiple="multiple"
+        :headers="{authorization:$store.getters['user/getToken']}"
         :before-upload="handleBeforeUpload"
         :show-file-list="false"
         :on-success="handleUploadFileSuccess"
@@ -28,31 +28,25 @@ export default {
   name: "DragUpload",
   data() {
     return {
-      uploadFileData: {
-        md5: "",
-        folderId: this.folderId
-      },
       fileList: []
     }
   },
   props: {
-    folderId: {
-      type: Number,
-      default: 3
+    multiple: {
+      type: Boolean,
+      default: true
     }
   },
   methods: {
     async handleBeforeUpload(file) {
-      try {
-        this.uploadFileData.md5 = await file2md5(file, {chunkSize: 3 * 1024 * 1024});
-      } catch (e) {
-        console.error('error', e);
-        return false;
-      }
       return true;
     },
     handleUploadFileSuccess(response, file, fileList) {
-      this.$emit("success", response, file, fileList)
+      if (response.code === 200) {
+        this.$emit("success", response, file, fileList)
+      } else {
+        this.$emit("error", response, file, fileList)
+      }
     },
   }
 }

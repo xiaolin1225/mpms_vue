@@ -7,10 +7,12 @@
       <BackSidebar/>
     </div>
     <div class="main-container" id="main-container">
-      <PageTitle :title="$route.meta.title" :breadcrumb="$route.matched"/>
+      <PageTitle :title="$route.meta.title" :breadcrumb="$route.matched" v-if="$route.meta.isShowHeader"/>
       <div class="page-content">
         <transition name="page-change">
-          <router-view/>
+          <keep-alive>
+            <router-view/>
+          </keep-alive>
         </transition>
       </div>
       <div class="footer-container py">
@@ -27,14 +29,20 @@ import BackHeader from "@/Layout/BackLayout/BackHeader/index.vue";
 import BackSidebar from "@/Layout/BackLayout/BackSidebar/index.vue";
 import BackFooter from "@/Layout/BackLayout/BackFooter/index.vue";
 import PageTitle from "@/components/PageTitle/index.vue";
+import {mapActions, mapState} from "vuex";
 
 export default {
   name: "BackLayout",
   components: {PageTitle, BackFooter, BackSidebar, BackHeader},
   methods: {
     closeSidebar() {
-      document.body.classList.remove("submenu-open")
-    }
+      this.$store.commit("system/toggleSubMenu", false);
+    },
+    ...mapActions("menu", ["getMenus"])
+  },
+  mounted() {
+    // this.getMenus();
+    this.$store.commit("system/toggleSubMenu", this.$store.state["system/isSubmenuOpen"]);
   }
 }
 </script>
@@ -43,16 +51,19 @@ export default {
 .page-container {
   width: 100%;
   height: 100%;
+  overflow: hidden;
 
   .main-container {
-    height: 100%;
+    height: calc(100% - var(--back-header-height));
+    overflow: auto;
+    margin-top: var(--back-header-height);
     margin-left: var(--back-sidebar-main-menu-width);
-    padding: calc(var(--back-header-height) + var(--padding-y)) var(--padding-x) var(--padding-y);
+    padding: calc(var(--padding-y)) var(--padding-x) var(--padding-y);
     transition: margin .5s cubic-bezier(.4, 0, 1, 1);
     z-index: 1;
 
     .page-content {
-      min-height: calc(100% - var(--back-header-height) - var(--padding-y) - var(--margin-y) - 1.5rem);
+      min-height: calc(100% - var(--back-header-height) - var(--padding-y) - var(--margin-y) - 5rem);
     }
   }
 

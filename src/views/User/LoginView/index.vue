@@ -1,6 +1,5 @@
 <template>
   <div class="login-container">
-
     <div class="login-box">
       <div class="brand-container">
         <div class="brand">
@@ -12,7 +11,7 @@
         <div class="login-form-header">
           <div class="title">登录</div>
         </div>
-        <el-form :model="form" :rules="rules" ref="form" status-icon class="login-form">
+        <el-form :model="form" :rules="rules" ref="form" status-icon class="login-form" @keyup.enter.native="userLogin">
           <el-form-item label="用户名" prop="username">
             <el-input v-model="form.username" placeholder="请输入用户名"/>
           </el-form-item>
@@ -24,7 +23,7 @@
               <el-input v-model="form.code" placeholder="请输入验证码">
                 <template #append>
                   <BaseImage class="verify-code-image"
-                             :src="codeUrl"
+                             :src="captcha.base64Image"
                              fit="contain"
                              @click.native="updateCode"
                   />
@@ -43,7 +42,7 @@
             </div>
           </div>
           <div class="form-button">
-            <el-button class="submit-button" type="primary" @click="userLogin">登录</el-button>
+            <el-button class="submit-button" type="primary" @click="userLogin" :loading="loading">登录</el-button>
           </div>
         </div>
       </div>
@@ -53,9 +52,12 @@
 
 <script>
 import BaseImage from "@/components/BaseImage/index.vue";
-import {isCodeCorrect, isUserExist, login} from "@/api/user";
-import {callback} from "chart.js/helpers";
-import {mapState} from "vuex";
+import {isCodeCorrect, isUserExist} from "@/api/user";
+import {mapActions, mapState} from "vuex";
+import {requestCaptcha} from "@/api/captcha";
+import Cookies from "js-cookie";
+import md5 from "md5";
+import {decrypt, encrypt} from "@/utils/jsencrypt";
 
 export default {
   name: "LoginView",
@@ -73,7 +75,7 @@ export default {
     let verifyCodeRule = async (rule, value, callback) => {
       if (value.trim() === "")
         return callback(new Error("请输入验证码"));
-      let res = await isCodeCorrect("login", {code: value});
+      let res = await isCodeCorrect({type: this.captcha.type, codeKey: this.captcha.key, code: value});
       if (res.data === false)
         callback(new Error("验证码错误"));
       else
@@ -95,36 +97,75 @@ export default {
         ],
       },
       remember: false,
-      baseCodeUrl: process.env.VUE_APP_API_URL + "/login/code",
-      codeUrl: ""
+      captcha: {
+        key: "",
+        base64Image: "",
+        type: "login",
+        timeout: 0,
+        updateId: null
+      },
+      loading: false
     }
   },
   computed: {...mapState("system", ["brand", "webTitle"])},
   methods: {
     updateCode() {
-      this.codeUrl = this.baseCodeUrl + "?" + Math.random();
+      if (this.captcha.updateId !== null)
+        clearTimeout(this.captcha.updateId);
+      requestCaptcha({codeKey: this.captcha.key, type: this.captcha.type}).then(res => {
+        this.captcha = res.data;
+        this.captcha.updateId = setTimeout(() => {
+          clearTimeout(this.captcha.updateId);
+          this.updateCode();
+        }, this.captcha.timeout * 1000);
+      });
+    },
+    getCookie() {
+      const username = Cookies.get("username");
+      const password = Cookies.get("password");
+      const remember = Cookies.get('remember')
+      this.form = {
+        username: username === undefined ? this.form.username : username,
+        password: password === undefined ? this.form.password : decrypt(password),
+      };
+      this.remember = remember === undefined ? false : Boolean(remember);
     },
     userLogin() {
       this.$refs.form.validate((valid) => {
         if (valid) {
-          login(this.form).then(res => {
+          this.loading = true;
+          let data = {...this.form}
+          data.codeKey = this.captcha.key;
+          data.password = md5(data.password);
+          if (this.remember) {
+            Cookies.set("username", data.username, {expires: 30});
+            Cookies.set("password", encrypt(data.password), {expires: 30});
+            Cookies.set('remember', this.remember, {expires: 30});
+          } else {
+            Cookies.remove("username");
+            Cookies.remove("password");
+            Cookies.remove('rememberMe');
+          }
+          this.login(data).then(res => {
             this.$message.success("登录成功");
-            let {code, message, data} = res;
-            console.log(code, message, data);
-            this.$router.push("/back/home");
-          }).catch(error => {
-            this.$message.error(error.message);
-          }).finally(() => {
+            this.$router.push("/").then(() => this.updateCode());
+          }).catch(() => {
             this.updateCode();
+          }).finally(() => {
+            this.loading = false;
           })
         } else {
+          this.updateCode();
           return false;
         }
       });
-    }
+    },
+    ...mapActions("user", ["login"])
   },
   mounted() {
+    window.md5 = md5;
     this.updateCode();
+    this.getCookie();
   }
 }
 </script>

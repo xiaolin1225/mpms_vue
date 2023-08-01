@@ -12,7 +12,7 @@ export default {
   components: {SubmenuItem},
   props: {
     list: Array
-  }
+  },
 }
 </script>
 

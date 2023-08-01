@@ -37,6 +37,10 @@ export default {
   //}
 }
 
+:deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
 @media screen and (max-width: 992px) {
   .container {
     display: block;
@@ -49,7 +53,7 @@ export default {
     text-align: center;
   }
 
-  .right-wrap{
+  .right-wrap {
     margin-top: var(--margin-y);
   }
 }

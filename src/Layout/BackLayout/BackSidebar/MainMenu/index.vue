@@ -5,20 +5,18 @@
       <MainMenuList :list="list"/>
     </div>
     <div class="tool-box">
-      <UserBox/>
+
     </div>
   </div>
 </template>
 
 <script>
-import MainMenuList from "@/Layout/BackLayout/BackSidebar/MainMenu/MainMenuList/index.vue";
-import UserBox from "@/Layout/BackLayout/BackSidebar/MainMenu/UserBox/index.vue";
-import MainMenuItem from "@/Layout/BackLayout/BackSidebar/MainMenu/MainMenuItem/index.vue";
-import {mapGetters} from "vuex";
+import MainMenuList from "@/Layout/BackLayout/BackSidebar/MainMenu/MainMenuList";
+import MainMenuItem from "@/Layout/BackLayout/BackSidebar/MainMenu/MainMenuItem";
 
 export default {
   name: "MainMenu",
-  components: {MainMenuItem, UserBox, MainMenuList},
+  components: {MainMenuItem, MainMenuList},
   props: {
     list: Array
   }

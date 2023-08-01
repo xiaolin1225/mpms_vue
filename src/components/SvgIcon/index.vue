@@ -15,10 +15,12 @@ const requireAll = requireContext => requireContext.keys().map(requireContext)
 const req = require.context('@/assets/icons/svg', false, /\.svg$/)
 const fileTypeIcon = require.context('@/assets/icons/svg/file-type', false, /\.svg$/)
 const musicPlayerIcon = require.context('@/assets/icons/svg/music-player', false, /\.svg$/)
+const drawingBoardIcon = require.context('@/assets/icons/svg/drawing-board', false, /\.svg$/)
 // 加载目录下的所有的 svg 文件
 requireAll(req)
 requireAll(fileTypeIcon)
 requireAll(musicPlayerIcon)
+requireAll(drawingBoardIcon)
 
 export default {
   name: "SvgIcon",

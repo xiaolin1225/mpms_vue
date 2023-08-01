@@ -22,3 +22,7 @@ export const fileSizeByteToM = (a, b) => {
     let f = Math.floor(Math.log(a) / Math.log(c));
     return parseFloat((a / Math.pow(c, f)).toFixed(d)) + " " + e[f];
 }
+
+export const imageSrcHandler = (src) => {
+    return /data:image\/.*;base64/.test(src) ? src : (process.env.VUE_APP_API_URL + src).replace("//", "/");
+}

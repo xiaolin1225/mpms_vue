@@ -1,13 +1,14 @@
+import {getMainMenu, getRouterList, getSubmenus} from "@/utils/menuUtils";
 import {requestMenuList} from "@/api/menus";
-import {getMenuByPid, getSubmenus, setRouterList} from "@/utils/menuUtils";
+import store from "@/store";
 
 export default {
     namespaced: true,
     state: {
-        menus: null,
-        mainMenus: null,
-        subMenus: null,
-        activeMenu: null
+        menus: [],
+        mainMenus: [],
+        subMenus: [],
+        menuTreeList: []
     },
     getters: {
         menus(state) {
@@ -18,6 +19,12 @@ export default {
         },
         subMenus(state) {
             return state.subMenus;
+        },
+        menuTreeList(state) {
+            return state.menuTreeList;
+        },
+        subMenuSize(state) {
+            return state.subMenus.length;
         }
     },
     mutations: {
@@ -29,19 +36,29 @@ export default {
         },
         setSubMenu(state, data) {
             state.subMenus = data;
+        },
+        setMenuTreeList(state, data) {
+            state.menuTreeList = data;
         }
     },
     actions: {
         getMenus({commit}) {
-            requestMenuList().then(res => {
-                let menus = res.data;
-                setRouterList(menus);
-                commit("setMainMenu", getMenuByPid(menus));
-                commit("setMenus", menus);
+            return new Promise(resolve => {
+                requestMenuList().then(res => {
+                    let menus = res.data;
+                    let routers = getRouterList(menus);
+                    commit("setMenus", routers);
+                    // commit("setMenuTreeList", getRouterList(menus, 0));
+                    commit("setMainMenu", getMainMenu(menus));
+                    resolve(routers);
+                })
             })
         },
         setSubmenus({commit, state}, pid) {
             commit("setSubMenu", getSubmenus(state.menus, pid));
+            if (state.subMenus.length <= 1) {
+                store.commit("system/toggleSubMenu");
+            }
         }
     },
 }

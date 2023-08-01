@@ -6,6 +6,9 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import '@/assets/css/style.css'
 import SvgIcon from "@/components/SvgIcon"
+import 'font-awesome/css/font-awesome.min.css';
+import 'animate.css';
+
 
 Vue.use(ElementUI)
 

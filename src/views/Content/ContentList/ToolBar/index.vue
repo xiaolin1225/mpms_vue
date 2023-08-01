@@ -50,10 +50,6 @@ export default {
 <style lang="less" scoped>
 
 
-.search-filter-form {
-  margin-bottom: -22px;
-}
-
 @media screen and (max-width: 992px) {
 
   .search-filter-form {

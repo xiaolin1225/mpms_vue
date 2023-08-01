@@ -1,5 +1,5 @@
 <template>
-  <div class="media-details-container" v-loading="loading">
+  <div class="media-details-container" v-loading="loading" v-if="info">
     <div class="left-wrap">
       <component :is="component"
                  :option="option"
@@ -23,7 +23,7 @@
           <table cellspacing="0" cellpadding="0">
             <tr class="item">
               <td class="label">ID</td>
-              <td class="value">{{ info.id }}</td>
+              <td class="value">{{ info?.id }}</td>
             </tr>
             <tr class="item">
               <td class="label">标题</td>
@@ -50,19 +50,21 @@
             <tr class="item">
               <td class="label">封面</td>
               <td class="value">
-                <BaseImage :src="info.thumb" v-if="!editMode && info.thumb"/>
-                <el-upload
-                    class="avatar-uploader"
-                    action="api/file/thumb"
-                    :show-file-list="false"
-                    :on-success="handleAvatarSuccess"
-                    :before-upload="beforeAvatarUpload"
-                    v-else-if="editMode"
-                    :data="uploadFileData"
-                >
-                  <img v-if="tempPic" :src="tempPic" class="avatar">
-                  <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-                </el-upload>
+                <div class="container" style="width: 200px;">
+                  <BaseImage :src="info.thumb" v-if="!editMode && info.thumb"/>
+                  <el-upload
+                      class="avatar-uploader"
+                      action="api/file/thumb"
+                      :show-file-list="false"
+                      :on-success="handleAvatarSuccess"
+                      :before-upload="beforeAvatarUpload"
+                      v-else-if="editMode"
+                      :data="uploadFileData"
+                  >
+                    <img v-if="tempPic" :src="tempPic" class="avatar">
+                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                  </el-upload>
+                </div>
               </td>
             </tr>
             <el-button @click="addMeta" v-if="editMode" type="primary"
@@ -88,8 +90,12 @@
               <td class="value">{{ info.path + (info.suffix ? "." + info.suffix : "") }}</td>
             </tr>
             <tr class="item">
+              <td class="label">文件链接</td>
+              <td class="value">{{ info.url }}</td>
+            </tr>
+            <tr class="item">
               <td class="label">类型</td>
-              <td class="value">{{ info.type.name }}</td>
+              <td class="value">{{ info.type }}</td>
             </tr>
             <tr class="item">
               <td class="label">后缀名</td>
@@ -113,11 +119,12 @@
 import VideoPlayer from "@/components/VideoPlayer/index.vue";
 import BaseImage from "@/components/BaseImage/index.vue";
 import MusicPlayer from "@/components/MusicPlayer/index.vue";
-import {downloadFile, fileSizeByteToM} from "@/utils/fileUtils";
-import {deleteFileMeta, requestFileInfo, requestFileMeta, saveFileInfo} from "@/api/file";
+import {downloadFile, fileSizeByteToM, imageSrcHandler} from "@/utils/fileUtils";
+import {deleteFileMeta, requestFileInfo, saveFileInfo} from "@/api/media";
 import LyricsScroll from "@/components/MusicPlayer/LyricsScroll/index.vue";
 import BaseBar from "@/components/BaseBar/index.vue";
 import file2md5 from "file2md5";
+import {mapMutations} from "vuex";
 
 export default {
   name: "MediaPreview",
@@ -168,7 +175,7 @@ export default {
           return {
             src: value.url,
             previewSrcList: [value.url],
-            fit: "contain",
+            fit: "scale-down",
             lazy: true
           }
         },
@@ -193,6 +200,7 @@ export default {
     }
   },
   methods: {
+
     fileSizeByteToM,
     getInstance(instance) {
       this.$emit("get-instance", instance);
@@ -205,29 +213,20 @@ export default {
       }
       requestFileInfo(value).then(res => {
         this.info = res.data;
+        this.info.thumb = imageSrcHandler(this.info.thumb)
         this.tempPic = this.info.thumb;
-        this.getFileMeta(value);
-
+        this.option = this.operation[this.info.type](this.info);
+        // this.info.type = this.getTypeName(this.info.type)
+        this.$store.dispatch("system/getTypeName", this.info.type).then(res => {
+          this.info.type = res
+        });
+        this.loading = false;
       }).catch(error => {
+        console.log(error)
         this.$message.error("文件信息请求失败，" + error);
         this.loading = false;
       })
 
-    },
-    getFileMeta(fid) {
-      requestFileMeta({fid}).then(res => {
-        this.metaList = res.data.map(item => {
-          item.value = JSON.parse(item.value);
-          return item;
-        });
-        let displayName = this.info.type ? this.info.type.parent.name : "default";
-        this.option = this.operation[displayName] ? this.operation[displayName](this.info) : this.operation.default();
-        this.editMode = this.isEdit;
-      }).catch(error => {
-        this.$message.error("文件信息请求失败，" + error);
-      }).finally(() => {
-        this.loading = false;
-      });
     },
     download() {
       if (this.info.url.trim().length > 0) {
@@ -338,12 +337,23 @@ export default {
     width: 60%;
     border-radius: .5rem;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .el-image {
+      width: unset;
+    }
   }
 
   .right-wrap {
     width: 40%;
     text-align: center;
     margin-left: var(--margin-x);
+
+    .el-image {
+      width: unset;
+    }
 
     .file-info-table {
       width: 100%;

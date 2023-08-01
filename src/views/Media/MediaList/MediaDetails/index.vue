@@ -65,7 +65,7 @@
 import VideoPlayer from "@/components/VideoPlayer/index.vue";
 import BaseImage from "@/components/BaseImage/index.vue";
 import MusicPlayer from "@/components/MusicPlayer/index.vue";
-import {deleteFileMeta, requestFileMeta, saveFileInfo} from "@/api/file";
+import {deleteFileMeta, requestFileMeta, saveFileInfo} from "@/api/media";
 
 export default {
   name: "MediaDetails",

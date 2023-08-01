@@ -1,5 +1,5 @@
 <template>
-  <li class="menu-item" :class="isActive?'active':''" @click="handleItemClick">
+  <li class="menu-item" :class="isActive?'active':''" @click="handleItemClick()">
     <i :class="icon" v-if="displayIcon"/>
     <span class="svg-icon" v-else-if="displaySvgIcon">
       <SvgIcon name="video"/>
@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import {mapActions} from "vuex";
+import {mapActions, mapGetters} from "vuex";
 
 export default {
   name: "MainMenuItem",
@@ -36,6 +36,7 @@ export default {
     // }
   },
   computed: {
+    ...mapGetters("menu", ["subMenus"]),
     displayIcon() {
       if (!this.icon) {
         return undefined;
@@ -67,23 +68,25 @@ export default {
     ...mapActions("menu", ["setSubmenus"]),
     handleItemClick() {
       this.$emit("handleItemClick");
-      if (!this.isActive) {
-        this.$router.push(this.link);
+      this.setSubmenus(this.id)
+      if (length <= 1 && !this.isActive) {
+        let length = this.subMenus.length;
+        this.$router.push(length === 0 ? this.link : this.subMenus[0].path).catch(error => console.log(error));
       }
     },
     setActiveStatus() {
       let index = this.$route.matched.findIndex(item => item.path === this.link);
-      if (index !== -1) {
-        this.setSubmenus(this.id);
-        this.isActive = true;
-      } else {
-        this.isActive = false;
-      }
-      // this.isActive = this.link === this.currentPath;
+      this.isActive = index !== -1;
     }
   },
   mounted() {
     this.setActiveStatus();
+    let index = this.$route.matched.findIndex(item => item.path === this.link);
+    if (index !== -1) {
+      let meta = this.$route.matched[index].meta;
+      meta.id ? this.setSubmenus(meta.id) : "";
+      // this.setSubmenus()
+    }
   }
 }
 </script>

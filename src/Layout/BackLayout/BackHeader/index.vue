@@ -8,8 +8,8 @@
     </div>
     <div class="header-content">
       <div class="left-wrap">
-        <div class="sub-menu-toggle-btn" @click="handleSidebarToggle">
-          <i class="el-icon-s-unfold"></i>
+        <div class="sub-menu-toggle-btn" v-if="subMenuSize>1">
+          <i :class="isSubmenuOpen?'el-icon-s-fold':'el-icon-s-unfold'" @click="toggleSubMenu"></i>
         </div>
       </div>
       <div class="right-wrap">
@@ -19,10 +19,11 @@
           <!--          </div>-->
         </div>
         <div class="user-info">
-          <div class="user-avatar">
-            <img src="https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif" alt="">
-          </div>
-          <div class="user-name">admin</div>
+          <!--          <div class="user-avatar">-->
+          <!--            <img :src="avatar" alt="">-->
+          <!--          </div>-->
+          <!--          <div class="user-name">{{ username }}</div>-->
+          <UserBox/>
         </div>
       </div>
     </div>
@@ -30,19 +31,29 @@
 </template>
 
 <script>
-import BrandLogo from "@/components/BrandLogo/index.vue";
-import {mapState} from "vuex";
+import BrandLogo from "@/components/BrandLogo";
+import UserBox from "@/Layout/BackLayout/BackHeader/UserBox";
+import {mapGetters, mapMutations, mapState} from "vuex";
 
 export default {
   name: "BackHeader",
-  components: {BrandLogo},
+  components: {BrandLogo, UserBox},
   computed: {
-    ...mapState("system", ["brand", "webTitle"])
+    ...mapState("system", ["brand", "webTitle", "isSubmenuOpen"]),
+    ...mapGetters("menu", ["subMenuSize"]),
+    // ...mapState("user", ["userinfo"]),
+    // username() {
+    //   return this.userinfo.username;
+    // },
+    // avatar() {
+    //   return this.userinfo.avatar;
+    // }
   },
   methods: {
-    handleSidebarToggle() {
-      document.body.classList.toggle("submenu-open");
-    }
+    ...mapMutations("system", ["toggleSubMenu"])
+  },
+  created() {
+    console.log(this.$route)
   }
 }
 </script>
@@ -58,7 +69,8 @@ export default {
   z-index: 20;
   display: flex;
   align-items: center;
-  background-color: hsla(0, 0%, 100%, .8);
+  background-color: var(--panel-background-color);
+  //background-color: hsla(0, 0%, 100%, .8);
   border-bottom: 1px solid var(--panel-border-color);
   transition: width .5s cubic-bezier(.4, 0, 1, 1);
 
@@ -79,6 +91,7 @@ export default {
       min-width: var(--back-sidebar-sub-menu-width);
       font-size: 1.5rem;
       color: var(--text-default-color);
+      margin-right: var(--margin-x);
     }
   }
 

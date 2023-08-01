@@ -3,34 +3,28 @@
     <div class="card">
       <BaseBar>
         <template #left>
-          <el-dropdown placement="bottom" @command="handleDropdownClick">
-            <el-button type="primary">
-              新建 / 上传<i class="el-icon-arrow-down el-icon--right"></i>
-            </el-button>
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item icon="el-icon-upload" command="upload">上传文件</el-dropdown-item>
-              <el-dropdown-item icon="el-icon-folder-add" command="create">新建文件夹</el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
+          <el-button type="primary" icon="el-icon-upload" @click="handleUploadDialogOpen">
+            上传
+          </el-button>
         </template>
         <template #right>
           <el-form v-model="filter" inline class="form">
-            <el-form-item label="查询范围">
-              <el-select
-                  v-model="filter.range"
-                  placeholder="请选择查询范围">
-                <el-option label="此文件夹" :value="1"/>
-                <el-option label="所有文件" :value="2"/>
-              </el-select>
-            </el-form-item>
-            <el-form-item label="文件类型">
-              <el-cascader
-                  v-model="filter.type"
-                  :options="options"
-                  :props="props"
-                  clearable
-              ></el-cascader>
-            </el-form-item>
+            <!--            <el-form-item label="分类">-->
+            <!--              <el-select-->
+            <!--                  v-model="filter.cid"-->
+            <!--                  placeholder="请选择分类">-->
+            <!--                <el-option label="此文件夹" :value="1"/>-->
+            <!--                <el-option label="所有文件" :value="2"/>-->
+            <!--              </el-select>-->
+            <!--            </el-form-item>-->
+            <!--            <el-form-item label="类型">-->
+            <!--              <el-cascader-->
+            <!--                  v-model="filter.type"-->
+            <!--                  :options="options"-->
+            <!--                  :props="props"-->
+            <!--                  clearable-->
+            <!--              ></el-cascader>-->
+            <!--            </el-form-item>-->
             <el-form-item label="关键词">
               <el-input v-model="filter.keyword" placeholder="请输入关键词"></el-input>
             </el-form-item>
@@ -48,10 +42,10 @@
           <div class="media-item-header">
             <el-checkbox :value="isChecked(item.id)" @click.native.prevent="itemCheckToggle(item.id)"/>
           </div>
-          <div @click="handleItemClick(item.id,item.isDir)">
+          <div @click="handleItemClick(item.id)">
             <div class="media-thumb-wrap">
               <div class="type-icon">
-                <SvgIcon :name="`type-${item.type.parent.name}`"/>
+                <SvgIcon :name="`type-${item.type}`"/>
               </div>
               <BaseImage :src="item.thumb" fit="cover" @load="loadThumb" style="transform: scale(1.1);"/>
             </div>
@@ -88,9 +82,9 @@
           ref="upload"
           class="drag-upload-container"
           drag
-          action="api/file/upload"
+          action="api/media/upload"
           multiple
-          :data="uploadFileData"
+          :headers="{authorization:$store.getters['user/getToken']}"
           :before-upload="handleBeforeUpload"
           :auto-upload="false"
           :show-file-list="false"
@@ -112,7 +106,7 @@
           <div class="right-wrap">
             <div class="operation">
               <el-button size="mini" @click="startUploadAll">全部开始</el-button>
-              <el-button size="mini">全部暂停</el-button>
+              <!--              <el-button size="mini">全部暂停</el-button>-->
               <el-button size="mini" @click="cancelUploadAll">全部取消</el-button>
             </div>
           </div>
@@ -138,12 +132,12 @@
                 <div class="bar" :style="`--percentage:${item.percentage}%`"></div>
                 <div class="status">{{ getUploadFileStatus(item.status) }}</div>
               </div>
-              <div class="operation">
-                <el-button trpe="primary" circle>
-                  <svg-icon name="play" style="width: 1rem;height: 1rem;"/>
-                </el-button>
-                <el-button type="danger" circle icon="el-icon-close"/>
-              </div>
+              <!--              <div class="operation">-->
+              <!--                <el-button trpe="primary" circle>-->
+              <!--                  <svg-icon name="play" style="width: 1rem;height: 1rem;"/>-->
+              <!--                </el-button>-->
+              <!--                <el-button type="danger" circle icon="el-icon-close"/>-->
+              <!--              </div>-->
             </div>
           </div>
         </div>
@@ -158,7 +152,7 @@
         append-to-body
     >
       <MediaPreview :id="viewId" :isEdit="isEdit" @get-instance="getInstance" v-if="viewDialogOpen"
-                    @fileInfoSaved="getFolderInfo(path)"/>
+                    @fileInfoSaved="getFileList"/>
     </el-dialog>
   </div>
 </template>
@@ -171,10 +165,10 @@ import MediaDetails from "@/views/Media/MediaList/MediaDetails/index.vue";
 import MediaPreview from "@/views/Media/MediaList/MediaPreview/index.vue";
 import BasePagination from "@/components/BasePagination/index.vue";
 import file2md5 from "file2md5";
-import {deleteFiles, requestFileList, requestFileType, requestFolderInfo} from "@/api/file";
+import {deleteFiles, requestFileListPage, requestFileType, requestFolderInfo} from "@/api/media";
 import BaseImage from "@/components/BaseImage/index.vue";
 import {createPopMenu} from "@/utils";
-import {fileSizeByteToM} from "@/utils/fileUtils";
+import {fileSizeByteToM, imageSrcHandler} from "@/utils/fileUtils";
 
 export default {
   name: "MediaList",
@@ -251,7 +245,7 @@ export default {
         ]
       },
       filter: {
-        range: 1,
+        cid: null,
         type: [],
         keyword: ""
       },
@@ -307,67 +301,64 @@ export default {
       this.waterfallArray = waterfallArray;
     },
     calculateColumn() {
-      let container = this.$refs.mediaCardList;
-      let imageWidth = 200;
-      let containerWidth = container.clientWidth;
-      let columns = Math.floor(containerWidth / imageWidth);
-      columns = columns > 1 ? columns : 2;
-      let spaceNumber = columns + 1;
-      let leftSpace = containerWidth - columns * imageWidth;
-      let space = leftSpace / spaceNumber;
-      let nextTops = new Array(columns).fill(0);
-      for (let i = 0; i < container.children.length; i++) {
-        let child = container.children[i];
-        let minTop = Math.min.apply(null, nextTops)
-        child.style.top = minTop + 'px';
-        let index = nextTops.indexOf(minTop);
-        nextTops[index] += child.clientHeight + space;
-        let left = (index + 1) * space + index * imageWidth;
-        child.style.left = left + "px";
-      }
-      let max = Math.max.apply(null, nextTops);
-      container.style.height = max + "px";
-    },
-    getFolderInfo(path) {
-      this.loading = true;
-      requestFolderInfo({path}).then(async res => {
-        this.folder = res.data
-        await this.getFileList(this.folder.id);
-      }).catch(error => {
-        console.log(error);
-        this.loading = false;
+      this.$nextTick(() => {
+        let container = this.$refs.mediaCardList;
+        if (!container) {
+          return;
+        }
+        let imageWidth = 200;
+        let containerWidth = container.clientWidth;
+        let columns = Math.floor(containerWidth / imageWidth);
+        columns = columns > 1 ? columns : 2;
+        let spaceNumber = columns + 1;
+        let leftSpace = containerWidth - columns * imageWidth;
+        let space = leftSpace / spaceNumber;
+        let nextTops = new Array(columns).fill(0);
+        for (let i = 0; i < container.children.length; i++) {
+          let child = container.children[i];
+          let minTop = Math.min.apply(null, nextTops)
+          child.style.top = minTop + 'px';
+          let index = nextTops.indexOf(minTop);
+          nextTops[index] += child.clientHeight + space;
+          let left = (index + 1) * space + index * imageWidth;
+          child.style.left = left + "px";
+        }
+        let max = Math.max.apply(null, nextTops);
+        container.style.height = max + "px";
       })
     },
-    getFileList(id) {
+    getFileList() {
       this.loadImages = 0;
-      requestFileList({id, current: this.current, size: this.size}).then(res => {
+      requestFileListPage({current: this.current, size: this.size, ...this.filter}).then(res => {
         let {pageNum, records, total} = res.data;
         this.pageNum = pageNum;
-        this.list = records;
-        this.total = total;
-        this.$nextTick(() => {
-          this.calculateColumn();
-          this.loading = false;
+        this.list = records.map(item => {
+          item.thumb = imageSrcHandler(item.thumb)
+          return item;
         })
+        this.total = total;
+        // this.$nextTick(() => {
+        //   this.calculateColumn();
+        //   this.loading = false;
+        // })
       }).catch(error => {
         console.log(error);
         this.loading = false;
       })
     },
-    handleDropdownClick(command) {
-      switch (command) {
-        case "upload":
-          this.uploadDialogOpen = true;
-          break;
-        case "create":
-          break;
-      }
+    handleUploadDialogOpen() {
+      this.uploadDialogOpen = true;
     },
     loadThumb() {
       this.loadImages++;
     },
     isChecked(value) {
       return this.checkedList.indexOf(value) !== -1;
+    },
+    handleItemClick(id) {
+      this.viewId = id;
+      this.viewDialogOpen = true;
+      this.isEdit = false;
     },
     itemCheckToggle(id, value) {
       let index = this.checkedList.indexOf(id);
@@ -452,23 +443,24 @@ export default {
       return fun;
     },
     onSubmit() {
-      console.log(this.filter);
+      this.getFileList();
+      this.calculateColumn();
     },
     async handleBeforeUpload(file) {
-      try {
-        this.uploadFileData.md5 = await file2md5(file, {chunkSize: 3 * 1024 * 1024});
-        this.uploadFileData.folderId = this.folder.id;
-      } catch (e) {
-        console.error('error', e);
-        return false;
-      }
+      // try {
+      //   this.uploadFileData.md5 = await file2md5(file, {chunkSize: 3 * 1024 * 1024});
+      //   this.uploadFileData.folderId = this.folder.id;
+      // } catch (e) {
+      //   console.error('error', e);
+      //   return false;
+      // }
       return true;
     },
     handleUploadFileProgress(event, file, fileList) {
       console.log(event, file, fileList);
     },
     handleUploadFileSuccess() {
-      this.getFileList(this.folder.id);
+      this.getFileList();
     },
     getTypeIcon(type) {
       console.log(type)
@@ -511,16 +503,6 @@ export default {
         item.percentage = 0;
       });
     },
-    handleItemClick(id, isDir) {
-      if (isDir) {
-        let content = this.list.find(item => item.id === id);
-        this.$router.push({path: "/back/media", query: {path: content.path}})
-      } else {
-        this.viewId = id;
-        this.viewDialogOpen = true;
-        this.isEdit = false;
-      }
-    },
     getInstance(instance) {
       this.instance = instance;
     },
@@ -532,14 +514,14 @@ export default {
     handleSizeChange(size) {
       this.size = size;
       this.current = 1;
-      this.getFileList(this.folder.id);
+      this.getFileList();
     },
   },
   props: {},
   computed: {
     path() {
       return this.$route.query.paht;
-    }
+    },
   },
   watch: {
     loadImages(value) {
@@ -553,10 +535,7 @@ export default {
     }
   },
   mounted() {
-    if (!this.path) {
-      this.$router.push({path: "/back/media", query: {path: "/资源库"}});
-    }
-    this.getFolderInfo(this.path);
+    this.getFileList();
     // window.addEventListener("resize", this.calculateColumn);
     // document.querySelector(".page-content").addEventListener("resize", this.calculateColumn)
     document.querySelector(".page-content").oncontextmenu = this.createDefaultRightMenu;
@@ -570,9 +549,9 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.form {
-  margin-bottom: -22px;
-}
+//.form {
+//  margin-bottom: -22px;
+//}
 
 .container {
   .media-card-list-container {
